@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: amina-saas
+    env: python
+    region: frankfurt
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true --server.fileWatcherType none
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: APP_ENV
+        value: production
+      - key: APP_NAME
+        value: أمينة SaaS
