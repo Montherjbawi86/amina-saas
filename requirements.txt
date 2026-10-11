@@ -1,9 +1,5 @@
-# ============================================
-# Requirements for Render (Python 3.11)
-# ============================================
-
 streamlit==1.31.1
-supabase==2.3.4
+supabase==2.6.0
 python-dotenv==1.0.0
 bcrypt==4.1.1
 pandas==2.1.4
@@ -20,4 +16,3 @@ arabic-reshaper==3.0.0
 python-bidi==0.4.2
 qrcode[pil]==7.4.2
 chardet==5.2.0
-watchdog==3.0.0
