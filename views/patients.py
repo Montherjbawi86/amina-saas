@@ -610,7 +610,7 @@ def _render_portal(clinic, patient_id=None):
                 "*{}*".format(code) + chr(10) + chr(10) +
                 "⏰ صالح 10 دقائق" + chr(10) + chr(10) +
                 "📱 ادخلي البوابة:" + chr(10) +
-                "http://192.168.1.189:8501/?pwa=1" + chr(10) + chr(10) +
+                "https://amina-saas.onrender.com/?pwa=1" + chr(10) + chr(10) +
                 "_مع تمنياتنا بالصحة والعافية_ 💜"
             )
             wa_link = build_whatsapp_link(_phone, wa_msg)
@@ -628,7 +628,10 @@ def _render_portal(clinic, patient_id=None):
     st.divider()
 
     # PWA URL
-    base_url = st.session_state.get("_public_base_url", "http://192.168.1.189:8501")
+    base_url = st.session_state.get("_public_base_url")
+    if not base_url:
+        import os as _os
+        base_url = _os.getenv("PUBLIC_BASE_URL", "https://amina-saas.onrender.com")
     pwa_url = "{}/?pwa=1".format(base_url.rstrip("/"))
 
     st.markdown("### 🔗 رابط البوابة")
