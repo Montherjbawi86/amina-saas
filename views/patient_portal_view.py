@@ -14,23 +14,20 @@ from services.patient_portal import (
 
 
 def render_patient_portal():
-    """Main PWA entry — must ALWAYS stop"""
+    """Main PWA entry — session_state FIRST"""
 
-    # ============ GET TOKEN ============
-    token = None
+    # 1. Check session_state first (survives rerun)
+    token = st.session_state.get("_pwa_token")
 
-    # 1. URL first
-    try:
-        _qp = st.query_params.get("t")
-        token = _qp[0] if isinstance(_qp, list) else _qp
-    except Exception:
-        pass
-
-    # 2. Session fallback
+    # 2. If not in session, try URL
     if not token:
-        token = st.session_state.get("_pwa_token")
+        try:
+            _qp = st.query_params.get("t")
+            token = _qp[0] if isinstance(_qp, list) else _qp
+        except Exception:
+            pass
 
-    # ============ VERIFY SESSION ============
+    # Validate
     patient = None
     clinic = None
     if token:
@@ -39,14 +36,14 @@ def render_patient_portal():
         except Exception:
             pass
 
-    # ============ ROUTE ============
+    # Route
     if patient:
         st.session_state["_pwa_token"] = token
         _render_dashboard(patient, clinic, token)
     else:
+        st.session_state.pop("_pwa_token", None)
         _render_login()
 
-    # CRITICAL: always stop — never fall through to main app
     st.stop()
 
 
@@ -153,10 +150,11 @@ def _render_login():
             try:
                 token, account = verify_otp(phone, code)
 
-                # Save in session
+                # Save token ONLY in session (Streamlit 1.40 sync issues with query_params)
                 st.session_state["_pwa_token"] = token
+                st.session_state["_pwa_logged_in"] = True
 
-                # Force URL update — this triggers reload in Streamlit 1.28
+                # Also try to set URL (best-effort, non-blocking)
                 try:
                     st.query_params["pwa"] = "1"
                     st.query_params["t"] = token
@@ -166,15 +164,15 @@ def _render_login():
                 st.success("✅ مرحباً! جاري التحميل...")
                 st.balloons()
 
-                # Delay then rerun
+                # Immediate rerun
                 import time as _t
-                _t.sleep(0.5)
+                _t.sleep(0.3)
                 st.rerun()
 
             except PortalError as e:
                 st.error("❌ {}".format(str(e)))
             except Exception as e:
-                st.error("خطأ: {}".format(str(e)[:100]))
+                st.error("خطأ: {}".format(str(e)[:150]))
 
         st.divider()
         c1, c2 = st.columns(2)
