@@ -14,29 +14,19 @@ from services.patient_portal import (
 
 
 def render_patient_portal():
-    """Main PWA entry — URL-first for reliability"""
+    """Main PWA entry — must ALWAYS stop"""
 
-    # ============ GET TOKEN (URL first) ============
+    # ============ GET TOKEN ============
     token = None
 
-    # 1. Try URL first
+    # 1. URL first
     try:
-        params = dict(st.query_params)
-        url_token = params.get("t", [None])
-        if url_token and url_token[0]:
-            token = url_token[0]
+        _qp = st.query_params.get("t")
+        token = _qp[0] if isinstance(_qp, list) else _qp
     except Exception:
         pass
 
-    # 2. Fallback to new API
-    if not token:
-        try:
-            if hasattr(st, "query_params"):
-                token = st.query_params.get("t")
-        except Exception:
-            pass
-
-    # 3. Fallback to session
+    # 2. Session fallback
     if not token:
         token = st.session_state.get("_pwa_token")
 
@@ -51,12 +41,13 @@ def render_patient_portal():
 
     # ============ ROUTE ============
     if patient:
-        # Save for next rerun
         st.session_state["_pwa_token"] = token
         _render_dashboard(patient, clinic, token)
     else:
-        # Invalid or no token — show login
         _render_login()
+
+    # CRITICAL: always stop — never fall through to main app
+    st.stop()
 
 
 

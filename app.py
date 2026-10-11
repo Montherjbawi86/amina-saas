@@ -77,6 +77,12 @@ except Exception:
 user = get_current_user()
 clinic = get_current_clinic()
 
+# Safety check: if not logged in, show landing
+if not user or not clinic:
+    st.warning("⚠️ يجب تسجيل الدخول")
+    st.info("👉 أعد تحميل الصفحة أو سجّل الدخول")
+    st.stop()
+
 # Alert count disabled for performance (0 = no badge)
 _critical_count = 0
 
