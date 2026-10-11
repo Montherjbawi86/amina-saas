@@ -56,174 +56,24 @@ except Exception:
 
 # ============ PATIENT PORTAL (PWA) ============
 try:
-    _qp = st.query_params.get("pwa")
-        _pwa_mode = _qp[0] if isinstance(_qp, list) else _qp
-    _pwa_token = _params.get("t", [None])[0]
+    _pwa_mode = None
+    _pwa_token = None
+    _pwa_from_session = st.session_state.get("_pwa_token")
 
-    # Also check newer API
-    if not _pwa_mode:
-        try:
-            if hasattr(st, "query_params"):
-                _pwa_mode = st.query_params.get("pwa")
-                _pwa_token = st.query_params.get("t")
-        except Exception:
-            pass
+    try:
+        if hasattr(st, "query_params"):
+            _pwa_mode = st.query_params.get("pwa")
+            _pwa_token = st.query_params.get("t")
+    except Exception:
+        pass
 
-    # Trigger PWA
-    if _pwa_mode == "1" or _pwa_token or st.session_state.get("_pwa_token"):
+    if _pwa_mode or _pwa_token or _pwa_from_session:
         from views.patient_portal_view import render_patient_portal
         render_patient_portal()
         st.stop()
-except Exception as _e:
-    st.error("PWA Error: {}".format(str(_e)[:200]))
-except Exception as _e:
-    st.error("PWA Error: {}".format(str(_e)[:200]))
+except Exception:
+    pass
 
-
-# CSS handled by core.ui.inject_css()
-
-
-# ============================================
-# GUEST VIEW — Beautiful Landing
-# ============================================
-if not is_logged_in():
-    from core.ui import (
-        landing_hero, feature_card, stat_box,
-        about_section, cta_section, footer_landing
-    )
-
-    # ============ HERO ============
-    landing_hero()
-
-    # ============ STATS ============
-    st.markdown("### 📊 أرقام تتحدث")
-    sc1, sc2, sc3, sc4 = st.columns(4)
-    with sc1:
-        stat_box("15+", "ميزة متقدمة")
-    with sc2:
-        stat_box("100%", "دعم عربي")
-    with sc3:
-        stat_box("24/7", "متاح دائماً")
-    with sc4:
-        stat_box("∞", "حوامل")
-
-    st.write("")
-
-    # ============ FEATURES ============
-    st.markdown("### ✨ المميزات الرئيسية")
-
-    f1, f2, f3, f4 = st.columns(4)
-    with f1:
-        feature_card("👩", "إدارة الحوامل", "ملفات كاملة مع المتابعة والتنبيهات التلقائية")
-    with f2:
-        feature_card("📅", "المواعيد", "تقويم ذكي مع تنبيهات واتساب للتذكير")
-    with f3:
-        feature_card("🤖", "تحليل AI", "تحليل ذكي للمخاطر بتقنية Groq متقدم")
-    with f4:
-        feature_card("📄", "تقارير PDF", "تقارير احترافية جاهزة للطباعة بالعربية")
-
-    st.write("")
-
-    f5, f6, f7, f8 = st.columns(4)
-    with f5:
-        feature_card("💊", "الوصفات", "كتابة الوصفات مع قاعدة أدوية شائعة")
-    with f6:
-        feature_card("💉", "التحصينات", "جدول تحصينات تلقائي حسب الحمل")
-    with f7:
-        feature_card("📈", "نمو الجنين", "منحنيات WHO مع تحليل مئوي دقيق")
-    with f8:
-        feature_card("📱", "WhatsApp", "إرسال رسائل جاهزة بضغطة زر")
-
-    st.write("")
-
-    # ============ ABOUT ============
-    about_section()
-
-    # ============ CTA ============
-    cta_section()
-
-    st.write("")
-
-    # ============ LOGIN / SIGNUP TABS ============
-    st.markdown("### 🔐 ابدأ الآن")
-
-    tab_login, tab_signup = st.tabs(["🔐 تسجيل الدخول", "🏥 تسجيل عيادة جديدة"])
-
-    with tab_login:
-        c1, c2, c3 = st.columns([1, 2, 1])
-        with c2:
-            with st.form("login_form"):
-                email = st.text_input("البريد الإلكتروني", placeholder="doctor@clinic.com")
-                password = st.text_input("كلمة المرور", type="password")
-                submitted = st.form_submit_button("🚀 دخول", use_container_width=True, type="primary")
-            if submitted:
-                try:
-                    u = login(email, password)
-                    c = get_clinic(u["clinic_id"])
-                    set_user(u, c)
-                    st.success("✅ مرحباً {}".format(u["full_name"]))
-                    st.balloons()
-                    time.sleep(0.5)
-                    st.rerun()
-                except AuthError as e:
-                    st.error("❌ {}".format(str(e)))
-                except Exception as e:
-                    st.error("خطأ: {}".format(e))
-
-    with tab_signup:
-        c1, c2, c3 = st.columns([1, 2, 1])
-        with c2:
-            with st.form("signup_form"):
-                clinic_name = st.text_input("اسم العيادة *", placeholder="عيادة النور")
-                phone = st.text_input("هاتف العيادة", placeholder="+964...")
-                doctor_name = st.text_input("اسم الطبيبة *", placeholder="د. أمينة")
-                email_s = st.text_input("البريد الإلكتروني *", placeholder="doctor@clinic.com")
-                password_s = st.text_input("كلمة المرور * (6+ أحرف)", type="password", key="spw")
-                password_s2 = st.text_input("تأكيد كلمة المرور *", type="password", key="spw2")
-                plan = st.selectbox("الباقة", ["starter", "pro", "hospital"],
-                    format_func=lambda x: {
-                        "starter": "Starter - 50 حامل - $49/شهر",
-                        "pro": "Pro - 200 حامل - $149/شهر",
-                        "hospital": "Hospital - غير محدود - $499/شهر",
-                    }[x])
-                submitted_s = st.form_submit_button("✨ إنشاء الحساب", use_container_width=True, type="primary")
-
-            if submitted_s:
-                errors = []
-                if not clinic_name: errors.append("اسم العيادة مطلوب")
-                if not doctor_name: errors.append("اسم الطبيبة مطلوب")
-                if not email_s or "@" not in email_s: errors.append("بريد إلكتروني غير صحيح")
-                if len(password_s) < 6: errors.append("كلمة المرور قصيرة")
-                if password_s != password_s2: errors.append("كلمتا المرور غير متطابقتين")
-
-                if errors:
-                    for e in errors: st.error(e)
-                else:
-                    try:
-                        clinic, user = signup_clinic(
-                            clinic_name=clinic_name, doctor_name=doctor_name,
-                            email=email_s, password=password_s,
-                            phone=phone, plan=plan
-                        )
-                        set_user(user, clinic)
-                        st.success("✅ تم إنشاء العيادة!")
-                        st.balloons()
-                        time.sleep(0.5)
-                        st.rerun()
-                    except AuthError as e:
-                        st.error(str(e))
-                    except Exception as e:
-                        st.error("خطأ: {}".format(e))
-
-    # ============ FOOTER ============
-    footer_landing()
-
-    st.stop()
-
-
-# ============================================
-# LOGGED IN
-# ============================================
 user = get_current_user()
 clinic = get_current_clinic()
 
