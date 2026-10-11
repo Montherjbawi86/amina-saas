@@ -176,22 +176,49 @@ def verify_otp(phone, code):
 
 
 def get_session(token):
-    """Get valid session"""
+    """Get valid session (timezone-safe)"""
+    from datetime import timezone
+
     if not token:
         return None
+
     rows = select("patient_sessions", "*", token=token)
     if not rows:
         return None
 
     session = rows[0]
-    try:
-        expires = datetime.fromisoformat(session["expires_at"].replace("Z", ""))
-        if expires < datetime.utcnow():
-            return None
-    except Exception:
-        return None
+
+    # Check expiry (timezone-safe)
+    expires_str = session.get("expires_at")
+    if expires_str:
+        try:
+            expires_str = str(expires_str).strip()
+
+            # Fix fractional seconds > 6 digits (Python 3.8 limit)
+            import re as _re
+            expires_str = _re.sub(r"(\.\d{6})\d+", r"\1", expires_str)
+
+            # Handle Z suffix
+            if expires_str.endswith("Z"):
+                expires_str = expires_str[:-1] + "+00:00"
+
+            expires = datetime.fromisoformat(expires_str)
+
+            # Ensure timezone aware
+            if expires.tzinfo is None:
+                expires = expires.replace(tzinfo=timezone.utc)
+
+            now = datetime.now(timezone.utc)
+
+            if expires < now:
+                return None
+
+        except Exception as e:
+            print("get_session expiry check warning: {}".format(e))
+            # Do NOT block on parse errors — return session anyway
 
     return session
+
 
 
 def get_patient_from_session(token):
