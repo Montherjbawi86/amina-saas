@@ -66,7 +66,7 @@ def _render_upload(clinic, user, p):
             key="uform_cat_{}".format(ver)
         )
 
-        notes = st.text_area("ملاحظات (اختياري)", height=60,
+        notes = st.text_area("ملاحظات (اختياري)", height=80,
             placeholder="مثال: سونار الأسبوع 20",
             key="uform_notes_{}".format(ver))
 

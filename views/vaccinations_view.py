@@ -208,7 +208,7 @@ def _render_new(clinic, user):
 
         batch = st.text_input("رقم الدفعة (Batch)", placeholder="اختياري")
         site = st.text_input("موضع الإعطاء", placeholder="مثال: ذراع أيسر")
-        notes = st.text_area("ملاحظات", height=60)
+        notes = st.text_area("ملاحظات", height=80)
 
         submitted = st.form_submit_button("💾 حفظ", use_container_width=True, type="primary")
 

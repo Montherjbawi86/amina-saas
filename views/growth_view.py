@@ -236,7 +236,7 @@ def _render_add(clinic, user, p):
             ac = st.number_input("AC (مم)", min_value=0.0, max_value=400.0, value=0.0, step=1.0)
 
         afi = st.number_input("AFI (السائل الأمنيوسي، سم)", min_value=0.0, max_value=30.0, value=0.0, step=0.1)
-        notes = st.text_area("ملاحظات", height=60)
+        notes = st.text_area("ملاحظات", height=80)
 
         submitted = st.form_submit_button("💾 حفظ القياس", use_container_width=True, type="primary")
 

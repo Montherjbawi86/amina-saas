@@ -417,7 +417,7 @@ def _render_new(clinic, user):
 
     # Diagnosis + instructions (outside form for live updates)
     diagnosis = st.text_input("📋 التشخيص", placeholder="مثال: فقر دم خفيف مع حمل")
-    instructions = st.text_area("📝 تعليمات عامة", height=60, placeholder="مثال: يُؤخذ مع الطعام")
+    instructions = st.text_area("📝 تعليمات عامة", height=80, placeholder="مثال: يُؤخذ مع الطعام")
 
     c1, c2 = st.columns(2)
     with c1:
