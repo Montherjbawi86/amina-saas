@@ -18,21 +18,45 @@ import qrcode
 
 
 def _register_font():
+    """Register Arabic font — local assets first, then system fonts"""
     import os
-    candidates = [
+
+    # 1. Local font in project (works on Render/Linux)
+    project_fonts = [
+        "assets/fonts/Amiri-Regular.ttf",
+        "assets/fonts/NotoNaskhArabic-Regular.ttf",
+    ]
+    for rel_path in project_fonts:
+        abs_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", rel_path)
+        abs_path = os.path.normpath(abs_path)
+        if os.path.exists(abs_path):
+            try:
+                pdfmetrics.registerFont(TTFont("Arabic", abs_path))
+                print("[PDF] Using font: {}".format(abs_path))
+                return "Arabic"
+            except Exception as e:
+                print("[PDF] Failed {}: {}".format(abs_path, e))
+
+    # 2. System fonts (macOS local)
+    system_fonts = [
         "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
         "/Library/Fonts/Arial Unicode.ttf",
         "/System/Library/Fonts/Supplemental/Arial.ttf",
         "/Library/Fonts/Arial.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     ]
-    for path in candidates:
+    for path in system_fonts:
         if os.path.exists(path):
             try:
                 pdfmetrics.registerFont(TTFont("Arabic", path))
+                print("[PDF] Using system font: {}".format(path))
                 return "Arabic"
             except Exception:
                 continue
+
+    print("[PDF] WARNING: No Arabic font found — using Helvetica")
     return "Helvetica"
+
 
 
 ARABIC_FONT = _register_font()
