@@ -249,14 +249,64 @@ def _render_dashboard(patient, clinic, token):
             </div>
             """.format(date=date_str, type=a.get("type", "متابعة")), unsafe_allow_html=True)
 
-    prescriptions = get_patient_prescriptions(clinic["id"], patient["id"], limit=5)
+    # ============ PRESCRIPTIONS ============
+    prescriptions = get_patient_prescriptions(clinic["id"], patient["id"], limit=10)
     if prescriptions:
-        st.markdown("### 💊 وصفاتك")
-        for rx in prescriptions[:3]:
-            with st.expander("💊 وصفة — {}".format((rx.get("issued_at") or "")[:10])):
-                st.write("**التشخيص:** {}".format(rx.get("diagnosis") or "—"))
-                for i, med in enumerate(rx.get("medications", []), 1):
-                    st.write("{}. **{}** — {}".format(i, med.get("name", ""), med.get("dose", "")))
+        st.markdown("### 💊 وصفاتك الطبية")
+        for idx, rx in enumerate(prescriptions[:5]):
+            issued = (rx.get("issued_at") or "")[:10]
+            with st.expander("📋 وصفة — {}".format(issued), expanded=(idx == 0)):
+                if rx.get("diagnosis"):
+                    st.markdown("**📋 التشخيص:**")
+                    st.info(rx["diagnosis"])
+
+                meds = rx.get("medications", [])
+                if meds:
+                    st.markdown("**💊 الأدوية ({}):**".format(len(meds)))
+                    for i, med in enumerate(meds, 1):
+                        st.write("{}. **{}** — {} | {} | {}".format(
+                            i,
+                            med.get("name", "—"),
+                            med.get("dose") or "—",
+                            med.get("frequency") or "—",
+                            med.get("duration") or "—"
+                        ))
+
+                if rx.get("instructions"):
+                    st.markdown("**📝 التعليمات:**")
+                    st.success(rx["instructions"])
+
+                if rx.get("notes"):
+                    st.caption("💬 " + rx["notes"])
+
+                st.divider()
+
+                btn_key = "pwa_pdf_btn_" + str(rx["id"])[:8]
+                if st.button("📥 تحضير PDF", key=btn_key, use_container_width=True, type="primary"):
+                    st.session_state["pwa_pdf_ready_" + str(rx["id"])[:8]] = True
+
+                if st.session_state.get("pwa_pdf_ready_" + str(rx["id"])[:8]):
+                    try:
+                        from services.prescription_pdf import generate_prescription_pdf
+                        with st.spinner("جاري تحضير الملف..."):
+                            pdf_bytes = generate_prescription_pdf(
+                                prescription=rx,
+                                patient=patient,
+                                clinic=clinic,
+                                doctor_name=clinic.get("doctor_name", "")
+                            )
+                        st.download_button(
+                            "⬇️ تحميل الملف",
+                            pdf_bytes,
+                            "prescription_{}.pdf".format(issued),
+                            "application/pdf",
+                            key="pwa_dl_" + str(rx["id"])[:8],
+                            use_container_width=True
+                        )
+                    except Exception as e:
+                        st.error("فشل PDF: {}".format(str(e)[:120]))
+                        st.session_state["pwa_pdf_ready_" + str(rx["id"])[:8]] = False
+
 
     vaccinations = get_patient_vaccinations(clinic["id"], patient["id"])
     pending = [v for v in vaccinations if v.get("status") == "pending"]
