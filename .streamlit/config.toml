@@ -1,0 +1,28 @@
+[server]
+headless = true
+port = 8501
+enableCORS = true
+enableXsrfProtection = true
+fileWatcherType = "watchdog"
+maxUploadSize = 50
+maxMessageSize = 200
+runOnSave = false
+
+[browser]
+gatherUsageStats = false
+
+[client]
+caching = true
+showErrorDetails = true
+toolbarMode = "minimal"
+
+[theme]
+primaryColor = "#16A34A"
+backgroundColor = "#F8FAFC"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#0F172A"
+font = "sans serif"
+
+[runner]
+fastReruns = true
+magicEnabled = false

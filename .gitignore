@@ -1,0 +1,79 @@
+# ============ PYTHON ============
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+env/
+.venv/
+ENV/
+
+# ============ ENVIRONMENT ============
+.env
+.env.*
+!.env.example
+
+# ============ STREAMLIT ============
+.streamlit/cache/
+.streamlit/secrets.toml
+
+# ============ DATA ============
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# ============ BACKUPS ============
+*.bak
+*_backup_*
+*_old_*
+*backup*
+_backup/
+
+# ============ TEST FILES ============
+test_*.pdf
+*.pdf.tmp
+diag.py
+check_*.py
+*_test.py
+speed_test.py
+
+# ============ IDE ============
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ============ OS ============
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# ============ JUPYTER ============
+.ipynb_checkpoints/
+*.ipynb
+
+# ============ PERSONAL (IMPORTANT!) ============
+.ssh/
+.git-credentials
+.gitconfig
+.bash_history
+.zsh_history
+.zshrc
+.bash_profile
+.bashrc
+.netrc
+.npmrc
+.pypirc
+
+# ============ NODE ============
+node_modules/
+.npm/
+.yarn/
+.yarnrc
+
+# ============ MACOS ============
+Thumbs.db
+Desktop.ini
