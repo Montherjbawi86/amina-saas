@@ -313,7 +313,18 @@ def _render_list(clinic, user):
                     token = share["token"]
 
                     # Build URL (adjust to your domain later)
-                    base_url = st.session_state.get("_public_base_url", "http://192.168.1.189:8501")
+                    # Auto-detect base URL
+                    base_url = st.session_state.get("_public_base_url")
+                    if not base_url:
+                        # Try to detect from browser (Streamlit 1.40+)
+                        try:
+                            # Production URL from env
+                            import os as _os
+                            base_url = _os.getenv("PUBLIC_BASE_URL", "")
+                        except Exception:
+                            pass
+                    if not base_url:
+                        base_url = "https://amina-saas.onrender.com"
                     public_url = "{}/?rx={}".format(base_url.rstrip("/"), token)
 
                     # Generate QR
