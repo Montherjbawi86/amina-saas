@@ -15,7 +15,7 @@ def _get_qp(key, default=None):
         if hasattr(st, "query_params"):
             return st.query_params.get(key, default)
         # Streamlit < 1.30
-        params = st.experimental_get_query_params()
+        params = dict(st.query_params)
         vals = params.get(key)
         if isinstance(vals, list):
             return vals[0] if vals else default
@@ -30,9 +30,9 @@ def _set_qp(key, value):
         if hasattr(st, "query_params"):
             st.query_params[key] = value
         else:
-            params = st.experimental_get_query_params()
+            params = dict(st.query_params)
             params[key] = value
-            st.experimental_set_query_params(**params)
+            # no-op: query_params already updated
     except Exception:
         pass
 
@@ -43,7 +43,7 @@ def _clear_qp():
         if hasattr(st, "query_params"):
             st.query_params.clear()
         else:
-            st.experimental_set_query_params()
+            st.query_params.clear()
     except Exception:
         pass
 

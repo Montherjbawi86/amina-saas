@@ -44,8 +44,8 @@ try:
     if hasattr(st, 'query_params'):
         _rx_token = st.query_params.get('rx')
     if not _rx_token:
-        _params = st.experimental_get_query_params()
-        _rx_token = _params.get('rx', [None])[0]
+        _qp = st.query_params.get('rx')
+        _rx_token = _qp[0] if isinstance(_qp, list) else _qp
 
     if _rx_token:
         from views.public_rx import render_public_rx
@@ -56,8 +56,8 @@ except Exception:
 
 # ============ PATIENT PORTAL (PWA) ============
 try:
-    _params = st.experimental_get_query_params()
-    _pwa_mode = _params.get("pwa", [None])[0]
+    _qp = st.query_params.get("pwa")
+        _pwa_mode = _qp[0] if isinstance(_qp, list) else _qp
     _pwa_token = _params.get("t", [None])[0]
 
     # Also check newer API

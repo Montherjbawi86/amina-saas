@@ -16,9 +16,6 @@ def render_public_rx():
     try:
         if hasattr(st, "query_params"):
             token = st.query_params.get("rx")
-        if not token:
-            params = st.experimental_get_query_params()
-            token = params.get("rx", [None])[0]
     except Exception:
         pass
 

@@ -21,7 +21,7 @@ def render_patient_portal():
 
     # 1. Try URL first
     try:
-        params = st.experimental_get_query_params()
+        params = dict(st.query_params)
         url_token = params.get("t", [None])
         if url_token and url_token[0]:
             token = url_token[0]
@@ -167,7 +167,8 @@ def _render_login():
 
                 # Force URL update — this triggers reload in Streamlit 1.28
                 try:
-                    st.experimental_set_query_params(pwa="1", t=token)
+                    st.query_params["pwa"] = "1"
+                    st.query_params["t"] = token
                 except Exception:
                     pass
 
@@ -302,7 +303,7 @@ def _render_dashboard(patient, clinic, token):
             if hasattr(st, "query_params"):
                 st.query_params.clear()
             else:
-                st.experimental_set_query_params()
+                st.query_params.clear()
         except Exception:
             pass
         st.rerun()
