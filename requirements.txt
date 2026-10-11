@@ -2,12 +2,13 @@
 # Requirements for Render (Python 3.11)
 # ============================================
 
-streamlit==1.31.1
+streamlit==1.40.0
 supabase==2.6.0
 python-dotenv==1.0.0
 bcrypt==4.1.1
 pandas==2.2.2
 numpy==2.1.0
+pyarrow==17.0.0
 plotly==5.22.0
 urllib3==2.2.2
 certifi==2024.8.30
