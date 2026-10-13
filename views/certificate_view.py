@@ -9,6 +9,7 @@ import streamlit as st
 from core.db import db
 from core.ui import page_header, spacer
 from services.certificate_pdf import generate_certificate_pdf
+from services.certificates import create_certificate, build_snapshot
 
 
 def _fetch_patients(clinic_id):
@@ -74,7 +75,7 @@ def _fetch_visits(clinic_id, patient_id):
 
 
 def _generate_for_patient(clinic, user, patient_id):
-    """Generate certificate and store in session"""
+    """Generate certificate, save to DB, store in session"""
     patient = _fetch_patient_full(clinic["id"], patient_id)
     if not patient:
         st.error("❌ لم يتم العثور على الحامل")
@@ -83,14 +84,39 @@ def _generate_for_patient(clinic, user, patient_id):
     visits = _fetch_visits(clinic["id"], patient_id)
     doctor_name = user.get("full_name", "") if user else ""
 
+    # 1. Build snapshot
+    snapshot = build_snapshot(patient, visits, clinic, doctor_name)
+
+    # 2. Save to DB
+    cert_row = create_certificate(
+        clinic_id=clinic["id"],
+        patient_id=patient_id,
+        issued_by=user.get("id") if user else None,
+        snapshot=snapshot,
+    )
+
+    if not cert_row:
+        st.error("❌ فشل حفظ الشهادة في قاعدة البيانات")
+        return
+
+    cert_id = cert_row.get("id")
+    snapshot["certificate_id"] = cert_id
+
+    # 3. Get site URL from config/env
+    import os
+    site_url = os.getenv("SITE_URL", "https://amina-saas.onrender.com")
+
+    # 4. Generate PDF with QR -> URL
     try:
         pdf = generate_certificate_pdf(
             patient=patient,
             visits=visits,
             clinic=clinic,
             doctor_name=doctor_name,
+            certificate_id=cert_id,
+            site_url=site_url,
         )
-        # Store in session
+
         st.session_state["_cert_data"] = pdf
         fname = "certificate_{}_{}.pdf".format(
             patient.get("full_name", "patient").replace(" ", "_")[:30],
@@ -98,7 +124,10 @@ def _generate_for_patient(clinic, user, patient_id):
         )
         st.session_state["_cert_filename"] = fname
         st.session_state["_cert_patient_name"] = patient.get("full_name", "")
+        st.session_state["_cert_id"] = str(cert_id)[:8].upper()
+
         st.success("✅ تم توليد شهادة **{}**".format(patient.get("full_name", "")))
+        st.caption("🔗 رابط التحقق: `{}/?cert={}`".format(site_url, cert_id))
     except Exception as e:
         st.error("❌ خطأ في التوليد")
         st.exception(e)

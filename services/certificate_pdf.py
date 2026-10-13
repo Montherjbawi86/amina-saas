@@ -371,13 +371,12 @@ def _build_recommendations_section(notes):
     return t
 
 
-def _build_qr_image(certificate_id, patient):
+def _build_qr_image(certificate_id, patient, site_url=None):
     try:
-        qr_content = "CERT:{}|{}|{}".format(
-            str(certificate_id)[:8],
-            patient.get("full_name", ""),
-            date.today().strftime("%Y-%m-%d")
-        )
+        # Build URL for verification page
+        base_url = site_url or "https://amina-saas.onrender.com"
+        base_url = base_url.rstrip("/")
+        qr_content = "{}/?cert={}".format(base_url, certificate_id)
         qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_M,
                            box_size=8, border=2)
         qr.add_data(qr_content)
@@ -392,9 +391,9 @@ def _build_qr_image(certificate_id, patient):
         return None
 
 
-def _build_signature_section(certificate_id, patient, doctor_name):
+def _build_signature_section(certificate_id, patient, doctor_name, site_url=None):
     styles = _styles()
-    qr_img = _build_qr_image(certificate_id, patient)
+    qr_img = _build_qr_image(certificate_id, patient, site_url)
 
     sig_data = [
         [Paragraph(_ar("ختم العيادة"), ParagraphStyle("cs", fontName=ARABIC_FONT,
@@ -472,7 +471,7 @@ def _risk_label(risk):
 # ============================================
 
 def generate_certificate_pdf(patient, visits=None, clinic=None,
-                              doctor_name="", certificate_id=None):
+                              doctor_name="", certificate_id=None, site_url=None):
     """
     Generate pregnancy certificate PDF.
 
@@ -539,7 +538,7 @@ def generate_certificate_pdf(patient, visits=None, clinic=None,
     story.append(Spacer(1, 20))
 
     # Signature + QR
-    story.append(_build_signature_section(cert_id, patient, doctor_name))
+    story.append(_build_signature_section(cert_id, patient, doctor_name, site_url))
 
     # Build
     doc.build(story,

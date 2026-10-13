@@ -54,6 +54,22 @@ try:
 except Exception:
     pass
 
+# ============ PUBLIC CERTIFICATE VIEW (no auth) ============
+try:
+    _cert_token = None
+    if hasattr(st, 'query_params'):
+        _cert_token = st.query_params.get('cert')
+    if not _cert_token:
+        _qp = st.query_params.get('cert')
+        _cert_token = _qp[0] if isinstance(_qp, list) else _qp
+
+    if _cert_token:
+        from views.public_cert import render_public_cert
+        render_public_cert()
+        st.stop()
+except Exception:
+    pass
+
 # ============ PATIENT PORTAL (PWA) ============
 try:
     _pwa_mode = None
