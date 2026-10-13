@@ -474,6 +474,7 @@ def export_all(clinic_id: str, date_from=None, date_to=None) -> bytes:
 
 def _df_to_xlsx(df, sheet_name: str) -> bytes:
     """Convert DataFrame to xlsx bytes with formatting"""
+    import pandas as pd
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name=sheet_name)
@@ -484,6 +485,7 @@ def _df_to_xlsx(df, sheet_name: str) -> bytes:
 
 def _write_sheet(writer, df, sheet_name: str, columns: list):
     """Write a sheet with fixed columns (even if empty)"""
+    import pandas as pd
     import pandas as pd
     if df.empty:
         df = pd.DataFrame(columns=columns)
