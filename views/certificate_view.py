@@ -4,6 +4,8 @@ Pregnancy Certificate View
 واجهة إصدار شهادات الحمل
 """
 from datetime import date
+from urllib.parse import quote
+import os
 import streamlit as st
 
 from core.db import db
@@ -125,12 +127,68 @@ def _generate_for_patient(clinic, user, patient_id):
         st.session_state["_cert_filename"] = fname
         st.session_state["_cert_patient_name"] = patient.get("full_name", "")
         st.session_state["_cert_id"] = str(cert_id)[:8].upper()
+        st.session_state["_cert_full_id"] = str(cert_id)
 
         st.success("✅ تم توليد شهادة **{}**".format(patient.get("full_name", "")))
         st.caption("🔗 رابط التحقق: `{}/?cert={}`".format(site_url, cert_id))
     except Exception as e:
         st.error("❌ خطأ في التوليد")
         st.exception(e)
+
+
+
+
+# ============ WHATSAPP HELPERS ============
+
+def _normalize_phone(phone):
+    """Convert phone to international format for wa.me (no +, no spaces)"""
+    if not phone:
+        return None
+    # Remove spaces, dashes, parens
+    p = str(phone).strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+    # Remove leading +
+    if p.startswith("+"):
+        p = p[1:]
+    # Remove leading 00
+    if p.startswith("00"):
+        p = p[2:]
+    # Iraq default: if starts with 0, add 964
+    if p.startswith("0"):
+        p = "964" + p[1:]
+    # If no country code and short, add 964
+    if len(p) < 10:
+        p = "964" + p
+    return p
+
+
+def _build_whatsapp_message(patient_name, clinic_name, doctor_name, cert_url):
+    """Build WhatsApp message in Arabic"""
+    msg = """مرحباً {name} 🌸
+
+شهادة حملك الرسمية من *{clinic}* جاهزة:
+
+🔗 {url}
+
+📋 افتحي الرابط للتحقق من الشهادة وتحميل PDF.
+
+مع تحيات،
+د. {doctor}""".format(
+        name=patient_name,
+        clinic=clinic_name,
+        url=cert_url,
+        doctor=doctor_name or "الطبيبة"
+    )
+    return msg
+
+
+def _build_wa_url(phone, message):
+    """Build wa.me URL"""
+    normalized = _normalize_phone(phone)
+    if not normalized:
+        return None
+    encoded = quote(message)
+    return "https://wa.me/{}?text={}".format(normalized, encoded)
+
 
 
 def render(clinic, user):
@@ -171,24 +229,79 @@ def render(clinic, user):
             with st.spinner("⏳ جاري التوليد..."):
                 _generate_for_patient(clinic, user, selected_id)
 
-    # ========== Download button ==========
+    # ========== Download + Share buttons ==========
     if "_cert_data" in st.session_state and st.session_state["_cert_data"]:
         st.divider()
-        st.markdown("#### 3️⃣ حمّل الشهادة")
+        st.markdown("#### 3️⃣ شارك / حمّل الشهادة")
 
         size_kb = len(st.session_state["_cert_data"]) / 1024.0
-        st.info("📁 جاهز للتحميل — **{}** — **{:.1f} KB**".format(
-            st.session_state.get("_cert_patient_name", ""), size_kb))
+        patient_name = st.session_state.get("_cert_patient_name", "")
+        cert_id_short = st.session_state.get("_cert_id", "")
 
-        st.download_button(
-            label="⬇️ تحميل PDF",
-            data=st.session_state["_cert_data"],
-            file_name=st.session_state.get("_cert_filename", "certificate.pdf"),
-            mime="application/pdf",
-            use_container_width=True,
-            type="primary",
-            key="cert_download_btn"
-        )
+        # Info
+        site_url = os.getenv("SITE_URL", "https://amina-saas.onrender.com").rstrip("/")
+        cert_url = "{}/?cert={}".format(site_url, st.session_state.get("_cert_full_id", ""))
+        st.info("📁 جاهز — **{}** — **{:.1f} KB**".format(patient_name, size_kb))
+
+        # Verification link
+        if cert_id_short:
+            st.markdown("##### 🔗 رابط التحقق")
+            st.code(cert_url, language=None)
+
+        # Action buttons
+        c1, c2 = st.columns(2)
+
+        # WhatsApp button
+        with c1:
+            # Find patient phone
+            selected_id = st.session_state.get("cert_patient_select")
+            patients_list = _fetch_patients(clinic["id"])
+            patient_phone = None
+            for p in patients_list:
+                if p["id"] == selected_id:
+                    patient_phone = p.get("phone")
+                    break
+
+            wa_url = _build_wa_url(
+                patient_phone,
+                _build_whatsapp_message(
+                    patient_name,
+                    clinic.get("name", ""),
+                    user.get("full_name", "") if user else "",
+                    cert_url,
+                )
+            )
+
+            if wa_url:
+                st.link_button(
+                    "📱 إرسال عبر WhatsApp",
+                    wa_url,
+                    use_container_width=True,
+                    type="primary"
+                )
+            else:
+                st.button(
+                    "📱 إرسال WhatsApp (لا يوجد رقم)",
+                    disabled=True,
+                    use_container_width=True,
+                    key="wa_disabled"
+                )
+
+        # Download PDF
+        with c2:
+            st.download_button(
+                label="⬇️ تحميل PDF",
+                data=st.session_state["_cert_data"],
+                file_name=st.session_state.get("_cert_filename", "certificate.pdf"),
+                mime="application/pdf",
+                use_container_width=True,
+                key="cert_download_btn"
+            )
+
+        # Copy URL button
+        st.markdown("##### 📋 نسخ الرابط")
+        st.code(cert_url, language=None)
+        st.caption("👆 اضغط على أيقونة النسخ بجانب الرابط")
 
         spacer(1)
 
@@ -196,6 +309,8 @@ def render(clinic, user):
             st.session_state.pop("_cert_data", None)
             st.session_state.pop("_cert_filename", None)
             st.session_state.pop("_cert_patient_name", None)
+            st.session_state.pop("_cert_id", None)
+            st.session_state.pop("_cert_full_id", None)
             st.rerun()
 
     # ========== Help ==========
