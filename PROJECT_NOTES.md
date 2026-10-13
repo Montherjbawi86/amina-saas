@@ -75,3 +75,54 @@ Messaging, Files, Alerts, Users, **Excel Export (#10)**, **Pregnancy Certificate
 - #7 2FA
 - #6 Google Calendar
 - #8 i18n
+
+---
+
+## ✅ #4 Lab Tests (2026-10-14)
+
+### DB:
+- جدول `lab_tests` (17 عمود)
+
+### الملفات:
+- `services/lab_tests.py` — 12 نوع + كشف شذوذ
+- `views/lab_tests_view.py` — 3 تبويبات
+
+### التعديلات:
+- `app.py` — قسم `lab_tests`
+- `core/ui.py` — زر sidebar
+
+### 12 نوع:
+1. 🩸 CBC (6 قيم)
+2. 🍬 Glucose (3)
+3. 💧 Urine (8)
+4. 🦋 TSH (3)
+5. ⚙️ Ferritin (1)
+6. 🅰️ Blood Group (2)
+7. 🦠 Hepatitis B (2)
+8. 🦠 Hepatitis C (1)
+9. 🛡️ HIV (1)
+10. 🧬 Rubella (2)
+11. ☀️ Vitamin D (1)
+12. 🦴 Calcium (2)
+
+### الميزات:
+- ✅ كشف تلقائي للقيم غير الطبيعية
+- ✅ 4 مستويات خطورة: mild/moderate/severe
+- ✅ معاينة فورية أثناء الإدخال
+- ✅ فلترة: حامل/نوع/غير طبيعي
+- ✅ إحصائيات لكل حامل
+
+---
+
+## 📊 الحالة بعد اليوم (2026-10-14)
+
+### مكتمل (22+):
+Multi-tenancy, Auth, Patients, Visits, AI, PDF, PWA, WhatsApp, QR,
+Prescriptions, Vaccinations, Growth, Analytics, Appointments, Messaging,
+Files, Alerts, Users, Excel Export (#10), Certificate (#5), Lab Tests (#4)
+
+### متبقٍ:
+- #9 Ultrasound Gallery
+- #7 2FA
+- #6 Google Calendar
+- #8 i18n
