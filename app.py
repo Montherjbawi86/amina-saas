@@ -277,6 +277,11 @@ elif _nav == "export":
     import views.excel_export_view as view_excel
     view_excel.render(clinic, user)
 
+# ============ PREGNANCY CERTIFICATE ============
+elif _nav == "certificate":
+    import views.certificate_view as view_cert
+    view_cert.render(clinic, user)
+
 # ============ ADMIN ============
 elif _nav == "admin":
     st.markdown("### ⚙️ الإدارة")

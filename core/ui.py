@@ -1293,6 +1293,7 @@ def render_sidebar(clinic, user, active="dashboard"):
             ("medical", "📋 السجل الطبي"),
             ("ai", "🤖 تحليل AI"),
             ("export", "📊 تصدير Excel"),
+            ("certificate", "📄 شهادة حمل"),
             ("admin", "⚙️ الإدارة"),
         ]
 
