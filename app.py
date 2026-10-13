@@ -272,6 +272,11 @@ elif _nav == "medical":
 elif _nav == "ai":
     view_ai.render(clinic, user, key_prefix="unified")
 
+# ============ EXCEL EXPORT ============
+elif _nav == "export":
+    import views.excel_export_view as view_excel
+    view_excel.render(clinic, user)
+
 # ============ ADMIN ============
 elif _nav == "admin":
     st.markdown("### ⚙️ الإدارة")

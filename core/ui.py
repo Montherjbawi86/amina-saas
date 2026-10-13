@@ -1292,6 +1292,7 @@ def render_sidebar(clinic, user, active="dashboard"):
             ("patients", "👩 الحوامل"),
             ("medical", "📋 السجل الطبي"),
             ("ai", "🤖 تحليل AI"),
+            ("export", "📊 تصدير Excel"),
             ("admin", "⚙️ الإدارة"),
         ]
 
