@@ -28,22 +28,42 @@ except ImportError:
 # ARABIC FONT
 # ============================================
 def _register_arabic_font():
-    """Try to register an Arabic-capable font"""
+    """Try to register an Arabic-capable font (assets first, then system)"""
     import os
+
+    # 1. Project fonts (best — Arabic optimized)
+    _here = os.path.dirname(os.path.abspath(__file__))
+    _project_fonts = [
+        os.path.normpath(os.path.join(_here, "..", "assets/fonts/Amiri-Regular.ttf")),
+        os.path.normpath(os.path.join(_here, "..", "assets/fonts/NotoNaskhArabic-Regular.ttf")),
+    ]
+    for path in _project_fonts:
+        if os.path.exists(path):
+            try:
+                pdfmetrics.registerFont(TTFont("Arabic", path))
+                print("[PDF] Using project font: {}".format(path))
+                return "Arabic"
+            except Exception as e:
+                print("[PDF] Failed {}: {}".format(path, str(e)[:80]))
+
+    # 2. System fonts (fallback)
     candidates = [
         "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
         "/Library/Fonts/Arial Unicode.ttf",
         "/System/Library/Fonts/Supplemental/Arial.ttf",
         "/Library/Fonts/Arial.ttf",
         "/System/Library/Fonts/Helvetica.ttc",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     ]
     for path in candidates:
         if os.path.exists(path):
             try:
                 pdfmetrics.registerFont(TTFont("Arabic", path))
+                print("[PDF] Using system font: {}".format(path))
                 return "Arabic"
             except Exception:
                 continue
+    print("[PDF] WARNING: no Arabic font found, using Helvetica")
     return "Helvetica"
 
 

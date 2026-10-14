@@ -37,18 +37,20 @@ except ImportError:
 
 def _register_font():
     import os
+    here = os.path.dirname(os.path.abspath(__file__))
+
     project_fonts = [
-        "assets/fonts/Amiri-Regular.ttf",
+        os.path.normpath(os.path.join(here, "..", "assets/fonts/Amiri-Regular.ttf")),
+        os.path.normpath(os.path.join(here, "..", "assets/fonts/NotoNaskhArabic-Regular.ttf")),
     ]
-    for rel in project_fonts:
-        abs_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", rel)
-        abs_path = os.path.normpath(abs_path)
+    for abs_path in project_fonts:
         if os.path.exists(abs_path):
             try:
                 pdfmetrics.registerFont(TTFont("Arabic", abs_path))
+                print("[AnalyticsPDF] Using: {}".format(abs_path))
                 return "Arabic"
-            except Exception:
-                pass
+            except Exception as e:
+                print("[AnalyticsPDF] Failed {}: {}".format(abs_path, str(e)[:80]))
 
     system_fonts = [
         "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
