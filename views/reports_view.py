@@ -15,6 +15,7 @@ from services.reports import (
     get_abnormal_labs, get_patients_report,
     get_ultrasound_report, get_certificates_report,
 )
+from services.analytics_pdf import generate_analytics_pdf
 
 
 # ============================================
@@ -514,6 +515,67 @@ def render(clinic, user):
         st.caption("📊 يتم عرض بيانات من **{}** إلى **{}**".format(date_from, date_to))
     else:
         st.caption("📊 يتم عرض **كل البيانات**")
+
+    # PDF export row
+    c_pdf1, c_pdf2, c_pdf3 = st.columns([5, 1, 1])
+    with c_pdf2:
+        if st.button("📄 PDF", use_container_width=True, type="primary",
+                     key="reports_pdf_btn", help="تصدير التقرير كـ PDF"):
+            with st.spinner("⏳ جاري توليد PDF..."):
+                try:
+                    _overview = get_overview(clinic["id"], date_from, date_to)
+                    _trends = get_monthly_trends(clinic["id"], 6)
+                    _labs = get_abnormal_labs(clinic["id"], date_from, date_to, limit=15)
+                    _patients = get_patients_report(clinic["id"], None, date_from, date_to)
+
+                    _pdf = generate_analytics_pdf(
+                        clinic=clinic,
+                        user=user,
+                        overview=_overview,
+                        trends=_trends,
+                        abnormal_labs=_labs,
+                        patients_report=_patients,
+                        date_from=date_from,
+                        date_to=date_to,
+                    )
+                    st.session_state["_analytics_pdf"] = _pdf
+                    st.session_state["_analytics_pdf_name"] = "analytics_{}.pdf".format(
+                        date.today().strftime("%Y%m%d")
+                    )
+                    st.success("✅ PDF جاهز!")
+                    st.rerun()
+                except Exception as e:
+                    st.error("❌ {}".format(str(e)[:200]))
+
+    with c_pdf3:
+        if st.button("🖨️ طباعة", use_container_width=True,
+                     key="reports_print_btn", help="طباعة الصفحة"):
+            st.info("💡 اضغط Cmd+P / Ctrl+P")
+
+    # Download PDF if ready
+    if st.session_state.get("_analytics_pdf"):
+        _pdf = st.session_state["_analytics_pdf"]
+        _fname = st.session_state.get("_analytics_pdf_name", "analytics.pdf")
+        _size = len(_pdf) / 1024.0
+
+        c_dl1, c_dl2, c_dl3 = st.columns([5, 1, 1])
+        with c_dl1:
+            st.success("📄 **PDF جاهز** — {:.1f} KB".format(_size))
+        with c_dl2:
+            st.download_button(
+                "⬇️ تحميل",
+                data=_pdf,
+                file_name=_fname,
+                mime="application/pdf",
+                use_container_width=True,
+                type="primary",
+                key="reports_pdf_download"
+            )
+        with c_dl3:
+            if st.button("🗑️", key="reports_pdf_clear", use_container_width=True):
+                st.session_state.pop("_analytics_pdf", None)
+                st.session_state.pop("_analytics_pdf_name", None)
+                st.rerun()
 
     st.divider()
 
