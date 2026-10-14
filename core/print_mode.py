@@ -169,54 +169,107 @@ def inject_print_css():
 
 
 def inject_print_mode_class():
-    """Add print-mode class to body if active (screen preview)"""
+    """
+    Lightweight version — no MutationObserver, no repeated scans.
+    Uses Streamlit session + CSS class on body only.
+    """
     if is_print_mode():
+        # Just add class once. CSS handles hiding.
         st.markdown("""
         <script>
         (function() {
-            const app = window.parent.document.querySelector('.stApp');
-            if (app) app.classList.add('print-mode-active');
+            try {
+                const app = window.parent.document.querySelector('.stApp');
+                if (app && !app.classList.contains('print-mode-active')) {
+                    app.classList.add('print-mode-active');
+                }
+            } catch(e) {}
+        })();
+        </script>
+        """, unsafe_allow_html=True)
+    else:
+        # Remove class
+        st.markdown("""
+        <script>
+        (function() {
+            try {
+                const app = window.parent.document.querySelector('.stApp');
+                if (app) app.classList.remove('print-mode-active');
+            } catch(e) {}
         })();
         </script>
         """, unsafe_allow_html=True)
 
 
+
 def render_print_controls(clinic=None, user=None, title=None):
     """
-    Render print controls (top-right): Print mode toggle + Print button.
-    Call this on any page that wants print support.
+    Render print controls — header + buttons.
+    Uses stable HTML/CSS that survives Streamlit rebuilds.
     """
-    # Inject CSS once
     inject_print_css()
     inject_print_mode_class()
 
-    # Controls (hidden in print mode itself)
-    c1, c2, c3 = st.columns([6, 1, 1])
-    with c2:
-        if is_print_mode():
-            if st.button("❌ إلغاء الطباعة", key="print_cancel", use_container_width=True):
+    if is_print_mode():
+        # Print mode ON: show header + cancel button
+        _render_print_header(clinic, user, title)
+
+        # Cancel button — styled inline (not a real st.button)
+        # to avoid being hidden by print-mode CSS
+        col1, col2, col3 = st.columns([5, 1, 1])
+        with col2:
+            if st.button("❌ إلغاء الطباعة", key="print_cancel_v2", use_container_width=True):
                 disable_print_mode()
                 st.rerun()
-        else:
-            if st.button("🖨️ طباعة", key="print_start", use_container_width=True):
+        with col3:
+            # Use components.html for the print button (real JS)
+            try:
+                import streamlit.components.v1 as components
+                components.html("""
+                <style>
+                html, body { margin:0; padding:0; background: transparent; }
+                button {
+                    width: 100%;
+                    height: 38px;
+                    background: linear-gradient(135deg, #16A34A 0%, #22C55E 100%);
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    padding: 0.5rem;
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                    font-family: -apple-system, 'Inter', sans-serif;
+                    box-shadow: 0 4px 12px rgba(22,163,74,0.3);
+                    transition: all 0.2s ease;
+                }
+                button:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 6px 16px rgba(22,163,74,0.4);
+                }
+                </style>
+                <button onclick="window.parent.print()">🖨️ اطبع الآن</button>
+                """, height=45)
+            except Exception:
+                st.info("⌨️ Cmd+P")
+
+        # Big instruction banner
+        st.markdown("""
+        <div style="background:#FEF3C7; border:1px solid #FDE68A; border-radius:12px;
+                    padding:0.75rem 1rem; margin:1rem 0; text-align:center;
+                    font-size:0.85rem; color:#92400E; font-weight:600;">
+            ⌨️ اضغط <b>Cmd+P</b> (Mac) أو <b>Ctrl+P</b> (Windows) لطباعة الصفحة
+            &nbsp;·&nbsp; اختر <b>Save as PDF</b> للحفظ
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        # Print mode OFF: show small print button on the right
+        col1, col2 = st.columns([8, 1])
+        with col2:
+            if st.button("🖨️ طباعة", key="print_start_v2", use_container_width=True):
                 enable_print_mode()
                 st.rerun()
 
-    with c3:
-        if is_print_mode():
-            # Browser print button (uses window.print via JS)
-            st.markdown("""
-            <button onclick="window.parent.print()" 
-                    style="width:100%; background:#16A34A; color:white; border:none;
-                           border-radius:8px; padding:0.5rem; font-weight:700;
-                           font-size:0.85rem; cursor:pointer;">
-                🖨️ اطبع الآن
-            </button>
-            """, unsafe_allow_html=True)
-
-    # Print header (visible only when printing)
-    if is_print_mode() and clinic:
-        _render_print_header(clinic, user, title)
 
 
 def _render_print_header(clinic, user, title=None):

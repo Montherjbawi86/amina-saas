@@ -5,7 +5,6 @@ from core.ui import (
     kpi_card_v2, page_header_v2, empty_state,
     info_card, section_header_v2
 )
-from core.print_mode import render_print_controls, render_print_footer
 from core.cache import show_cache_status
 
 
@@ -20,7 +19,6 @@ def render(clinic, user):
     )
 
     # Print controls
-    render_print_controls(clinic, user, title="تقرير لوحة التحكم")
 
     show_cache_status("dash_view")
     try:
@@ -46,7 +44,6 @@ def render(clinic, user):
             st.warning("⚠️ اقتربت من حد الباقة. فكر بالترقية.")
 
         # Print footer
-        render_print_footer()
 
         # ============ TODAY'S APPOINTMENTS ============
         st.divider()
