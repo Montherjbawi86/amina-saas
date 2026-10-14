@@ -1,81 +1,76 @@
 # -*- coding: utf-8 -*-
-"""Streamlit session management (Streamlit 1.28 compatible)"""
+"""Streamlit session management (clean, no external storage)"""
 import streamlit as st
-from typing import Optional, Dict
 
 
 SESSION_USER_KEY = "amina_user"
 SESSION_CLINIC_KEY = "amina_clinic"
 
 
+# ============================================
+# QUERY PARAMS
+# ============================================
+
 def _get_qp(key, default=None):
-    """Get query param (compatible with 1.28+)"""
     try:
-        # Streamlit 1.30+
         if hasattr(st, "query_params"):
             return st.query_params.get(key, default)
-        # Streamlit < 1.30
-        params = dict(st.query_params)
-        vals = params.get(key)
-        if isinstance(vals, list):
-            return vals[0] if vals else default
-        return vals or default
+        return default
     except Exception:
         return default
 
 
 def _set_qp(key, value):
-    """Set query param"""
     try:
         if hasattr(st, "query_params"):
-            st.query_params[key] = value
-        else:
-            params = dict(st.query_params)
-            params[key] = value
-            # no-op: query_params already updated
+            st.query_params[key] = str(value)
     except Exception:
         pass
 
 
 def _clear_qp():
-    """Clear query params"""
     try:
-        if hasattr(st, "query_params"):
-            st.query_params.clear()
-        else:
-            st.query_params.clear()
+        st.query_params.clear()
     except Exception:
         pass
 
 
+# ============================================
+# MAIN API
+# ============================================
+
 def init_session():
+    """Initialize session — restore from query params if present"""
     if SESSION_USER_KEY not in st.session_state:
         st.session_state[SESSION_USER_KEY] = None
     if SESSION_CLINIC_KEY not in st.session_state:
         st.session_state[SESSION_CLINIC_KEY] = None
 
+    # Already logged in this session
+    if st.session_state[SESSION_USER_KEY] is not None:
+        return
+
     # Try restore from query params
-    if st.session_state[SESSION_USER_KEY] is None:
-        uid = _get_qp("uid")
-        cid = _get_qp("cid")
-        if uid and cid:
-            try:
-                from core.auth import get_user
-                from core.tenant import get_clinic
-                u = get_user(uid)
-                if u and u.get("is_active"):
-                    c = get_clinic(cid)
-                    if c and c.get("is_active"):
-                        st.session_state[SESSION_USER_KEY] = u
-                        st.session_state[SESSION_CLINIC_KEY] = c
-            except Exception:
-                pass
+    uid = _get_qp("uid")
+    cid = _get_qp("cid")
+    if uid and cid:
+        try:
+            from core.auth import get_user
+            from core.tenant import get_clinic
+            u = get_user(uid)
+            c = get_clinic(cid) if u else None
+            if u and u.get("is_active") and c and c.get("is_active"):
+                st.session_state[SESSION_USER_KEY] = u
+                st.session_state[SESSION_CLINIC_KEY] = c
+                print("[session] restored from URL: {}".format(u.get("email")))
+        except Exception as e:
+            print("[session] restore error: {}".format(str(e)[:100]))
 
 
 def set_user(user, clinic):
+    """Set current user — persist uid/cid to URL"""
     st.session_state[SESSION_USER_KEY] = user
     st.session_state[SESSION_CLINIC_KEY] = clinic
-    # Persist to query params
     _set_qp("uid", user["id"])
     _set_qp("cid", clinic["id"])
 

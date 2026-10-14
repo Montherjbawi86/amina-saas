@@ -285,6 +285,11 @@ elif _nav == "ultrasound":
     import views.ultrasound_view as view_us
     view_us.render(clinic, user)
 
+# ============ REPORTS ============
+elif _nav == "reports":
+    import views.reports_view as view_reports
+    view_reports.render(clinic, user)
+
 # ============ TWO-FACTOR AUTH ============
 elif _nav == "two_factor":
     import views.two_factor_view as view_2fa
