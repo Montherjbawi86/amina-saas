@@ -1614,6 +1614,7 @@ def render_sidebar(clinic, user, active="dashboard"):
         # ========== NAV ITEMS ==========
         nav_items = [
             ("dashboard", "📊 لوحة التحكم"),
+            ("search", "🔍 البحث الشامل"),
             ("appointments", "📅 المواعيد"),
             ("patients", "👩 الحوامل"),
             ("medical", "📋 السجل الطبي"),

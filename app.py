@@ -189,6 +189,11 @@ _nav = st.session_state.get("nav_section", "dashboard")
 if _nav == "dashboard":
     view_dashboard.render(clinic, user)
 
+# ============ GLOBAL SEARCH ============
+elif _nav == "search":
+    import views.global_search_view as view_search
+    view_search.render(clinic, user)
+
 # ============ APPOINTMENTS ============
 elif _nav == "appointments":
     view_appointments.render(clinic, user)
