@@ -170,3 +170,61 @@ Files, Alerts, Users,
 - #7 2FA
 - #6 Google Calendar
 - #8 i18n
+
+---
+
+## ✅ جلسة 2026-10-14/15 — إنجاز كبير
+
+### الميزات المكتملة:
+
+| # | الميزة | الملفات |
+|---|--------|---------|
+| 10 | Excel Export | services/excel_export.py, views/excel_export_view.py |
+| 5 | Pregnancy Certificate | services/certificate_pdf.py, services/certificates.py, views/certificate_view.py, views/public_cert.py |
+| 4 | Lab Tests (12 نوع) | services/lab_tests.py, views/lab_tests_view.py |
+| 9 | Ultrasound Gallery | services/ultrasound.py, views/ultrasound_view.py |
+| 7 | 2FA | services/two_factor.py, views/two_factor_view.py |
+| — | Login/Signup Redesign | views/auth_view.py |
+| — | UI 2.0 | core/ui.py (page_header_v2, kpi_card_v2, empty_state, info_card, etc.) |
+| — | Print Mode | core/print_mode.py |
+| — | Persistent Session | core/session.py |
+
+### DB Tables الجديدة:
+- certificates
+- lab_tests
+- ultrasound_images
+- user_2fa
+
+### Storage Buckets:
+- ultrasound-images (public)
+
+### تعديلات app.py:
+- قسم `export`
+- قسم `certificate`
+- قسم `lab_tests`
+- قسم `ultrasound`
+- قسم `two_factor`
+- 2FA gate
+- Auth redesign (render_auth)
+
+### requirements.txt:
+- openpyxl==3.1.5
+- pyotp==2.9.0
+- qrcode[pil] (كان موجوداً)
+
+### ملاحظات مهمة:
+- ⛔ لا تُحدّث streamlit (1.40.0) / supabase (2.6.0)
+- ⛔ لا تُحدّث urllib3 / pyarrow / numpy
+- ✅ استخدم `st.query_params` (ليس experimental_*)
+- ✅ text_area height >= 68
+- ✅ nano يُفسد indentation → استخدم `cat << 'PYEOF'`
+- ✅ print_mode: بدون MutationObserver (يُبطئ)
+- ⚠️ محلياً Python 3.8 → بعض المكتبات الحديثة لا تعمل
+
+### الميزات المتبقية:
+- #6 Google Calendar
+- #8 i18n (عربي/إنجليزي/كردي)
+- #11 Reports Dashboard (متقدم)
+- #12 Vaccination Schedule
+- #13 Stripe/Paddle
+
