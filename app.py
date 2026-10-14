@@ -38,6 +38,14 @@ inject_css()
 inject_sidebar_styles()
 init_session()
 
+# Print mode CSS (always injected)
+try:
+    from core.print_mode import inject_print_css, inject_print_mode_class
+    inject_print_css()
+    inject_print_mode_class()
+except Exception:
+    pass
+
 # ============ PUBLIC PRESCRIPTION VIEW (no auth) ============
 try:
     _rx_token = None
