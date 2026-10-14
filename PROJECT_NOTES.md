@@ -126,3 +126,47 @@ Files, Alerts, Users, Excel Export (#10), Certificate (#5), Lab Tests (#4)
 - #7 2FA
 - #6 Google Calendar
 - #8 i18n
+
+---
+
+## ✅ #9 Ultrasound Gallery (2026-10-14)
+
+### DB + Storage:
+- جدول `ultrasound_images`
+- Bucket `ultrasound-images` (public)
+
+### الملفات:
+- `services/ultrasound.py` — رفع/عرض/حذف
+- `views/ultrasound_view.py` — 3 تبويبات
+
+### التعديلات:
+- `app.py` — قسم `ultrasound`
+- `core/ui.py` — زر sidebar
+
+### الميزات:
+- ✅ رفع متعدد (jpg/png/webp/pdf — حتى 10MB)
+- ✅ Supabase Storage (public URLs)
+- ✅ معرض Grid (3 أعمدة)
+- ✅ فلترة: حامل / أسابيع
+- ✅ تعديل caption/notes/weeks
+- ✅ حذف (storage + DB)
+- ✅ إحصائيات لكل حامل
+- ✅ تحميل ZIP لكل صور حامل
+
+### المسار في Storage:
+`{clinic_id}/{patient_id}/{timestamp}_{uuid}.{ext}`
+
+---
+
+## 📊 الحالة الإجمالية بعد اليوم (2026-10-14)
+
+### مكتمل (23+):
+Multi-tenancy, Auth, Patients, Visits, AI, PDF, PWA, WhatsApp, QR,
+Prescriptions, Vaccinations, Growth, Analytics, Appointments, Messaging,
+Files, Alerts, Users,
+**Excel Export (#10)**, **Certificate (#5)**, **Lab Tests (#4)**, **Ultrasound (#9)**
+
+### متبقٍ:
+- #7 2FA
+- #6 Google Calendar
+- #8 i18n
