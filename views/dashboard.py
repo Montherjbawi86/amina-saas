@@ -6,6 +6,7 @@ from core.ui import (
     info_card, section_header_v2
 )
 from core.cache import show_cache_status
+from services.dashboard_alerts import get_all_alerts, count_alerts
 
 
 def render(clinic, user):
@@ -42,6 +43,142 @@ def render(clinic, user):
 
         if stats["usage_pct"] > 80:
             st.warning("⚠️ اقتربت من حد الباقة. فكر بالترقية.")
+
+        # ============ SMART ALERTS ============
+        try:
+            _alerts = get_all_alerts(clinic["id"])
+            _counts = count_alerts(_alerts)
+            _total_alerts = _counts["total"]
+
+            if _total_alerts > 0:
+                st.divider()
+                st.subheader("🚨 يحتاج انتباهك الآن")
+                st.caption("{} تنبيه".format(_total_alerts))
+
+                # Row 1: Overdue vaccinations + Abnormal labs
+                c1, c2 = st.columns(2)
+
+                with c1:
+                    _ov = _alerts["overdue_vaccinations"]
+                    if _ov:
+                        st.markdown("##### 💉 تطعيمات متأخرة")
+                        for v in _ov[:3]:
+                            days = v.get("_days_overdue", 0)
+                            st.markdown("""
+                            <div style="background:#FEF2F2;border:1px solid #FECACA;
+                                        border-radius:10px;padding:0.6rem 0.85rem;
+                                        margin-bottom:0.35rem;">
+                                <div style="font-weight:600;color:#991B1B;font-size:0.88rem;">
+                                    💉 {vaccine}
+                                </div>
+                                <div style="color:#7F1D1D;font-size:0.78rem;margin-top:0.2rem;">
+                                    👩 {name} · متأخر {days} يوم
+                                </div>
+                            </div>
+                            """.format(
+                                vaccine=v.get("vaccine_name", "—")[:35],
+                                name=v.get("_patient_name", "—"),
+                                days=days,
+                            ), unsafe_allow_html=True)
+
+                        if len(_ov) > 3:
+                            st.caption("... و{} أخرى".format(len(_ov) - 3))
+
+                with c2:
+                    _labs = _alerts["abnormal_labs"]
+                    if _labs:
+                        st.markdown("##### ⚠️ تحاليل غير طبيعية")
+                        for t in _labs[:3]:
+                            sev = t.get("severity", "moderate")
+                            color_map = {
+                                "severe": ("#991B1B", "#FEE2E2", "#FECACA"),
+                                "moderate": ("#9A3412", "#FFF7ED", "#FED7AA"),
+                                "mild": ("#854D0E", "#FEFCE8", "#FEF08A"),
+                            }
+                            fg, bg, border = color_map.get(sev, ("#9A3412", "#FFF7ED", "#FED7AA"))
+                            st.markdown("""
+                            <div style="background:{bg};border:1px solid {border};
+                                        border-radius:10px;padding:0.6rem 0.85rem;
+                                        margin-bottom:0.35rem;">
+                                <div style="font-weight:600;color:{fg};font-size:0.88rem;">
+                                    🔬 {test}
+                                </div>
+                                <div style="color:{fg};font-size:0.78rem;margin-top:0.2rem;opacity:0.85;">
+                                    👩 {name} · {days} يوم
+                                </div>
+                            </div>
+                            """.format(
+                                bg=bg, border=border, fg=fg,
+                                test=t.get("test_name", "—")[:35],
+                                name=t.get("_patient_name", "—"),
+                                days=t.get("_days_ago", "?"),
+                            ), unsafe_allow_html=True)
+
+                        if len(_labs) > 3:
+                            st.caption("... و{} أخرى".format(len(_labs) - 3))
+
+                # Row 2: High-risk + urgent appointments
+                c3, c4 = st.columns(2)
+
+                with c3:
+                    _hr = _alerts["high_risk_no_visit"]
+                    if _hr:
+                        st.markdown("##### 🚨 مخاطر عالية — بدون زيارة")
+                        for p in _hr[:3]:
+                            st.markdown("""
+                            <div style="background:#FEF2F2;border:1px solid #FECACA;
+                                        border-radius:10px;padding:0.6rem 0.85rem;
+                                        margin-bottom:0.35rem;">
+                                <div style="font-weight:600;color:#991B1B;font-size:0.88rem;">
+                                    👩 {name}
+                                </div>
+                                <div style="color:#7F1D1D;font-size:0.78rem;margin-top:0.2rem;">
+                                    📞 {phone}
+                                </div>
+                            </div>
+                            """.format(
+                                name=p.get("name", "—"),
+                                phone=p.get("phone", "—"),
+                            ), unsafe_allow_html=True)
+
+                        if len(_hr) > 3:
+                            st.caption("... و{} أخرى".format(len(_hr) - 3))
+
+                with c4:
+                    _appts = _alerts["urgent_appointments"]
+                    if _appts:
+                        st.markdown("##### 📅 مواعيد عاجلة (اليوم/غداً)")
+                        for a in _appts[:3]:
+                            try:
+                                from datetime import datetime as _dt
+                                dt_obj = _dt.fromisoformat(a["scheduled_at"].replace("Z", ""))
+                                time_str = dt_obj.strftime("%m-%d %H:%M")
+                            except Exception:
+                                time_str = "—"
+
+                            st.markdown("""
+                            <div style="background:#EFF6FF;border:1px solid #BFDBFE;
+                                        border-radius:10px;padding:0.6rem 0.85rem;
+                                        margin-bottom:0.35rem;">
+                                <div style="font-weight:600;color:#1E40AF;font-size:0.88rem;">
+                                    📅 {time}
+                                </div>
+                                <div style="color:#1E3A8A;font-size:0.78rem;margin-top:0.2rem;">
+                                    👩 {name}
+                                </div>
+                            </div>
+                            """.format(
+                                time=time_str,
+                                name=a.get("_patient_name", "—"),
+                            ), unsafe_allow_html=True)
+
+                        if len(_appts) > 3:
+                            st.caption("... و{} أخرى".format(len(_appts) - 3))
+
+                if _total_alerts > 8:
+                    st.info("👉 اذهب إلى **📊 التقارير** لرؤية كل التنبيهات")
+        except Exception as _e:
+            print("[dashboard] alerts error: {}".format(_e))
 
         # Print footer
 
