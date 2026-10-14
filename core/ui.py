@@ -1295,6 +1295,7 @@ def render_sidebar(clinic, user, active="dashboard"):
             ("export", "📊 تصدير Excel"),
             ("certificate", "📄 شهادة حمل"),
             ("lab_tests", "🔬 التحاليل المخبرية"),
+            ("ultrasound", "📸 صور السونار"),
             ("admin", "⚙️ الإدارة"),
         ]
 

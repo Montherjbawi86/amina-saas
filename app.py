@@ -303,6 +303,11 @@ elif _nav == "lab_tests":
     import views.lab_tests_view as view_lab
     view_lab.render(clinic, user)
 
+# ============ ULTRASOUND GALLERY ============
+elif _nav == "ultrasound":
+    import views.ultrasound_view as view_us
+    view_us.render(clinic, user)
+
 # ============ ADMIN ============
 elif _nav == "admin":
     st.markdown("### ⚙️ الإدارة")
