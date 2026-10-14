@@ -1103,6 +1103,332 @@ section[data-testid="stSidebar"] h3 {
         height: 100% !important;
     }
 
+
+    /* ============================================ */
+    /* ============ ENHANCED UI 2.0 ============ */
+    /* ============================================ */
+
+    /* === GLASS CARDS === */
+    .glass-card {
+        background: rgba(255,255,255,0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(226,232,240,0.8);
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 4px 24px rgba(15,23,42,0.04);
+        transition: all 0.25s ease;
+    }
+    .glass-card:hover {
+        box-shadow: 0 8px 32px rgba(22,163,74,0.08);
+        border-color: rgba(134,239,172,0.6);
+        transform: translateY(-2px);
+    }
+
+    /* === KPI CARD 2.0 === */
+    .kpi-card-v2 {
+        background: white;
+        border-radius: 16px;
+        padding: 1.25rem 1.35rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid #E2E8F0;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+        transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        position: relative;
+        overflow: hidden;
+    }
+    .kpi-card-v2::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #16A34A, #22C55E);
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.3s ease;
+    }
+    .kpi-card-v2:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(22,163,74,0.12);
+        border-color: #86EFAC;
+    }
+    .kpi-card-v2:hover::before {
+        transform: scaleX(1);
+    }
+    .kpi-card-v2 .kpi-icon-v2 {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+        transition: transform 0.3s ease;
+    }
+    .kpi-card-v2:hover .kpi-icon-v2 {
+        transform: scale(1.08) rotate(-3deg);
+    }
+    .kpi-card-v2 .kpi-value-v2 {
+        font-size: 1.55rem;
+        font-weight: 800;
+        color: #0F172A;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+    }
+    .kpi-card-v2 .kpi-label-v2 {
+        font-size: 0.78rem;
+        color: #64748B;
+        font-weight: 600;
+        margin-top: 0.25rem;
+        letter-spacing: 0.01em;
+    }
+
+    /* === PAGE HEADER 2.0 === */
+    .page-header-v2 {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        background: linear-gradient(135deg, #FFFFFF 0%, #F0FDF4 100%);
+        border-radius: 16px;
+        border: 1px solid #E2E8F0;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.03);
+        animation: fadeDown 0.5s ease-out;
+    }
+    .page-header-v2 .ph-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #16A34A 0%, #22C55E 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(22,163,74,0.25);
+    }
+    .page-header-v2 .ph-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0F172A;
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+    .page-header-v2 .ph-sub {
+        font-size: 0.85rem;
+        color: #64748B;
+        margin: 0.15rem 0 0 0;
+    }
+
+    /* === EMPTY STATE === */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1.5rem;
+        background: linear-gradient(135deg, #F8FAFC 0%, #F0FDF4 100%);
+        border-radius: 16px;
+        border: 2px dashed #E2E8F0;
+    }
+    .empty-state .es-icon {
+        font-size: 3.5rem;
+        margin-bottom: 0.75rem;
+        display: inline-block;
+    }
+    .empty-state .es-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0F172A;
+        margin: 0.5rem 0;
+    }
+    .empty-state .es-desc {
+        color: #64748B;
+        font-size: 0.9rem;
+        max-width: 400px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    /* === SECTION HEADER === */
+    .section-header-v2 {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 1.5rem 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #F1F5F9;
+    }
+    .section-header-v2 .sh-icon {
+        font-size: 1.3rem;
+    }
+    .section-header-v2 .sh-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0F172A;
+        margin: 0;
+    }
+    .section-header-v2 .sh-badge {
+        background: #F0FDF4;
+        color: #15803D;
+        padding: 0.15rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        border: 1px solid #BBF7D0;
+    }
+
+    /* === INFO / WARN / DANGER CARDS === */
+    .info-card {
+        display: flex;
+        gap: 0.85rem;
+        padding: 0.9rem 1.1rem;
+        border-radius: 12px;
+        margin-bottom: 0.5rem;
+        border: 1px solid;
+        align-items: flex-start;
+    }
+    .info-card.info {
+        background: #EFF6FF;
+        border-color: #BFDBFE;
+    }
+    .info-card.warn {
+        background: #FFFBEB;
+        border-color: #FDE68A;
+    }
+    .info-card.danger {
+        background: #FEF2F2;
+        border-color: #FECACA;
+    }
+    .info-card.success {
+        background: #F0FDF4;
+        border-color: #BBF7D0;
+    }
+    .info-card .ic-icon {
+        font-size: 1.4rem;
+        line-height: 1;
+    }
+    .info-card .ic-content {
+        flex: 1;
+        font-size: 0.9rem;
+        color: #334155;
+        line-height: 1.55;
+    }
+    .info-card .ic-title {
+        font-weight: 700;
+        color: #0F172A;
+        margin-bottom: 0.15rem;
+    }
+
+    /* === QUICK ACTION BUTTONS === */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0;
+    }
+
+    /* === BETTER METRICS === */
+    [data-testid="stMetric"] {
+        background: white;
+        border: 1px solid #E2E8F0;
+        border-radius: 14px;
+        padding: 1rem 1.15rem;
+        transition: all 0.2s ease;
+    }
+    [data-testid="stMetric"]:hover {
+        border-color: #86EFAC;
+        box-shadow: 0 4px 16px rgba(22,163,74,0.08);
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 1.5rem !important;
+        font-weight: 800 !important;
+        color: #0F172A !important;
+        letter-spacing: -0.02em;
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 0.78rem !important;
+        color: #64748B !important;
+        font-weight: 600 !important;
+    }
+
+    /* === BETTER DIVIDER === */
+    hr {
+        border: none !important;
+        border-top: 1px solid #F1F5F9 !important;
+        margin: 1.5rem 0 !important;
+    }
+
+    /* === ANIMATIONS === */
+    @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+
+    /* === STAGGERED ANIMATION === */
+    .stagger > * {
+        animation: fadeUp 0.4s ease-out;
+        animation-fill-mode: both;
+    }
+    .stagger > *:nth-child(1) { animation-delay: 0.05s; }
+    .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+    .stagger > *:nth-child(3) { animation-delay: 0.15s; }
+    .stagger > *:nth-child(4) { animation-delay: 0.20s; }
+    .stagger > *:nth-child(5) { animation-delay: 0.25s; }
+    .stagger > *:nth-child(6) { animation-delay: 0.30s; }
+
+    /* === PRIMARY BUTTONS IMPROVED === */
+    .stButton > button[kind="primary"],
+    .stDownloadButton > button[kind="primary"],
+    .stFormSubmitButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #16A34A 0%, #22C55E 100%) !important;
+        box-shadow: 0 4px 16px rgba(22,163,74,0.3) !important;
+        transition: all 0.2s ease !important;
+    }
+    .stButton > button[kind="primary"]:hover,
+    .stDownloadButton > button[kind="primary"]:hover,
+    .stFormSubmitButton > button[kind="primary"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(22,163,74,0.4) !important;
+    }
+
+    /* === TAB IMPROVEMENT === */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 4px !important;
+        padding: 6px !important;
+        background: #F1F5F9 !important;
+        border-radius: 12px !important;
+        border: 1px solid #E2E8F0 !important;
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px !important;
+        padding: 10px 18px !important;
+        font-weight: 600 !important;
+        transition: all 0.15s ease !important;
+    }
+    .stTabs [aria-selected="true"] {
+        background: white !important;
+        color: #16A34A !important;
+        box-shadow: 0 2px 8px rgba(15,23,42,0.08) !important;
+        font-weight: 700 !important;
+    }
+
+    /* === MAIN AREA PADDING === */
+    .main .block-container {
+        padding: 1.5rem 2rem 3rem 2rem !important;
+    }
 </style>
     """, unsafe_allow_html=True)
 
@@ -1471,3 +1797,121 @@ def footer_landing():
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+
+# ============================================
+# UI 2.0 COMPONENTS
+# ============================================
+
+def page_header_v2(title, subtitle=None, icon="📋", badge=None):
+    """Modern page header with gradient icon"""
+    badge_html = ""
+    if badge:
+        badge_html = '<span style="background:#F0FDF4;color:#15803D;padding:0.2rem 0.7rem;border-radius:999px;font-size:0.75rem;font-weight:700;border:1px solid #BBF7D0;margin-left:auto;">{}</span>'.format(badge)
+
+    sub_html = ""
+    if subtitle:
+        sub_html = '<p class="ph-sub">{}</p>'.format(subtitle)
+
+    st.markdown("""
+    <div class="page-header-v2">
+        <div class="ph-icon">{icon}</div>
+        <div style="flex:1;">
+            <h1 class="ph-title">{title}</h1>
+            {sub}
+        </div>
+        {badge}
+    </div>
+    """.format(icon=icon, title=title, sub=sub_html, badge=badge_html),
+    unsafe_allow_html=True)
+
+
+def kpi_card_v2(icon, value, label, color=None):
+    """Enhanced KPI card with gradient and hover"""
+    st.markdown("""
+    <div class="kpi-card-v2">
+        <div class="kpi-icon-v2">{icon}</div>
+        <div style="flex:1;min-width:0;">
+            <div class="kpi-value-v2">{value}</div>
+            <div class="kpi-label-v2">{label}</div>
+        </div>
+    </div>
+    """.format(icon=icon, value=value, label=label),
+    unsafe_allow_html=True)
+
+
+def empty_state(icon, title, description, action_text=None):
+    """Beautiful empty state placeholder"""
+    action_html = ""
+    if action_text:
+        action_html = '<div style="margin-top:1rem;"><button disabled style="background:#16A34A;color:white;border:none;border-radius:10px;padding:0.6rem 1.5rem;font-weight:600;font-size:0.9rem;opacity:0.7;">{}</button></div>'.format(action_text)
+
+    st.markdown("""
+    <div class="empty-state">
+        <div class="es-icon">{icon}</div>
+        <h3 class="es-title">{title}</h3>
+        <p class="es-desc">{desc}</p>
+        {action}
+    </div>
+    """.format(icon=icon, title=title, desc=description, action=action_html),
+    unsafe_allow_html=True)
+
+
+def info_card(kind, title, message, icon=None):
+    """Info/warn/danger/success card"""
+    icons = {
+        "info": "ℹ️",
+        "warn": "⚠️",
+        "danger": "🚨",
+        "success": "✅",
+    }
+    if icon is None:
+        icon = icons.get(kind, "ℹ️")
+
+    st.markdown("""
+    <div class="info-card {kind}">
+        <div class="ic-icon">{icon}</div>
+        <div class="ic-content">
+            <div class="ic-title">{title}</div>
+            {message}
+        </div>
+    </div>
+    """.format(kind=kind, icon=icon, title=title, message=message),
+    unsafe_allow_html=True)
+
+
+def section_header_v2(icon, title, badge=None):
+    """Modern section header"""
+    badge_html = ""
+    if badge:
+        badge_html = '<span class="sh-badge">{}</span>'.format(badge)
+
+    st.markdown("""
+    <div class="section-header-v2">
+        <span class="sh-icon">{icon}</span>
+        <h3 class="sh-title">{title}</h3>
+        {badge}
+    </div>
+    """.format(icon=icon, title=title, badge=badge_html),
+    unsafe_allow_html=True)
+
+
+def hero_banner(title, subtitle, icon="👶", gradient=True):
+    """Big hero banner"""
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #16A34A 0%, #22C55E 100%);
+                border-radius: 20px;
+                padding: 2.5rem 2rem;
+                color: white;
+                margin-bottom: 1.5rem;
+                text-align: center;
+                box-shadow: 0 12px 40px rgba(22,163,74,0.25);
+                position: relative;
+                overflow: hidden;">
+        <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">{icon}</div>
+        <h1 style="color: white !important; font-size: 2rem !important; margin: 0 !important; font-weight: 900; letter-spacing: -0.03em;">{title}</h1>
+        <p style="color: rgba(255,255,255,0.95) !important; margin-top: 0.5rem; font-size: 1rem;">{subtitle}</p>
+    </div>
+    """.format(icon=icon, title=title, subtitle=subtitle),
+    unsafe_allow_html=True)
+

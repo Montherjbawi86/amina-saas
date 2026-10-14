@@ -1,27 +1,38 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 from core.tenant import get_clinic_stats_cached
-from core.ui import kpi_card
+from core.ui import (
+    kpi_card_v2, page_header_v2, empty_state,
+    info_card, section_header_v2
+)
 from core.cache import show_cache_status
 
 
 def render(clinic, user):
     """Render dashboard tab"""
+    # Modern page header
+    page_header_v2(
+        title="لوحة التحكم",
+        subtitle="نظرة عامة على العيادة والمتابعة اليومية",
+        icon="📊",
+        badge=clinic.get("plan", "").upper()
+    )
+
     show_cache_status("dash_view")
     try:
         stats = get_clinic_stats_cached(clinic["id"])
 
         c1, c2, c3, c4 = st.columns(4)
         with c1:
-            kpi_card("👩", "{} / {}".format(
+            kpi_card_v2("👩", "{} / {}".format(
                 stats["current_patients"], stats["max_patients"]),
-                "الحوامل النشطات", "#0EA5A0")
+                "الحوامل النشطات")
         with c2:
-            kpi_card("👥", str(stats["current_users"]), "المستخدمون", "#22C55E")
+            kpi_card_v2("👥", str(stats["current_users"]), "المستخدمون")
         with c3:
-            kpi_card("💎", stats["plan"].upper(), "الباقة", "#10B981")
+            kpi_card_v2("💎", stats["plan"].upper(), "الباقة")
         with c4:
-            kpi_card("📈", "{}%".format(stats["usage_pct"]), "الاستخدام", "#F59E0B")
+            kpi_card_v2("📈", "{}%".format(stats["usage_pct"]), "الاستخدام")
 
         st.write("")
         st.progress(min(stats["usage_pct"] / 100.0, 1.0))
@@ -44,7 +55,11 @@ def render(clinic, user):
             today_appts = today_appointments(clinic["id"])
 
             if not today_appts:
-                st.info("📭 لا توجد مواعيد اليوم")
+                empty_state(
+                    "📅",
+                    "لا توجد مواعيد اليوم",
+                    "عندما تحجز مواعيد للحوامل، ستظهر هنا تلقائياً"
+                )
             else:
                 st.markdown("**العدد: {}**".format(len(today_appts)))
                 patients_map = {p["id"]: p for p in list_patients_cached(clinic["id"])}
