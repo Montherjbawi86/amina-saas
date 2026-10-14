@@ -150,92 +150,10 @@ if user and clinic:
         # On any error, don't block login (fail-safe)
         pass
 
-# ============ GUEST VIEW (Login/Signup) ============
+# ============ GUEST VIEW (Login/Signup) — Modern Design ============
 if not user or not clinic:
-    import time
-
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #16A34A 0%, #22C55E 100%);
-                border-radius: 16px; padding: 2rem 1.5rem; text-align: center;
-                color: white; margin-bottom: 1.5rem;
-                box-shadow: 0 8px 24px rgba(22,163,74,0.25);">
-        <div style="font-size:3rem;">👶</div>
-        <h1 style="color:white !important; margin:0.5rem 0 0 0; font-size:1.75rem;">أمينة SaaS</h1>
-        <p style="opacity:0.95; margin-top:0.5rem;">نظام إدارة عيادات النساء والولادة</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    tab_login, tab_signup = st.tabs(["🔐 تسجيل الدخول", "🏥 تسجيل عيادة جديدة"])
-
-    with tab_login:
-        c1, c2, c3 = st.columns([1, 2, 1])
-        with c2:
-            with st.form("login_form"):
-                email = st.text_input("البريد الإلكتروني", placeholder="doctor@clinic.com")
-                password = st.text_input("كلمة المرور", type="password")
-                submitted = st.form_submit_button("🚀 دخول", use_container_width=True, type="primary")
-            if submitted:
-                try:
-                    from core.auth import login as auth_login
-                    from core.tenant import get_clinic as tc_get_clinic
-                    from core.session import set_user
-
-                    u = auth_login(email, password)
-                    c = tc_get_clinic(u["clinic_id"])
-                    set_user(u, c)
-                    st.success("✅ مرحباً {}".format(u["full_name"]))
-                    st.balloons()
-                    time.sleep(0.5)
-                    st.rerun()
-                except Exception as e:
-                    st.error("❌ {}".format(str(e)[:200]))
-
-    with tab_signup:
-        c1, c2, c3 = st.columns([1, 2, 1])
-        with c2:
-            with st.form("signup_form"):
-                clinic_name = st.text_input("اسم العيادة *", placeholder="عيادة النور")
-                phone = st.text_input("هاتف العيادة", placeholder="+964...")
-                doctor_name = st.text_input("اسم الطبيبة *", placeholder="د. أمينة")
-                email_s = st.text_input("البريد الإلكتروني *", placeholder="doctor@clinic.com")
-                password_s = st.text_input("كلمة المرور * (6+ أحرف)", type="password", key="spw")
-                password_s2 = st.text_input("تأكيد كلمة المرور *", type="password", key="spw2")
-                plan = st.selectbox("الباقة", ["starter", "pro", "hospital"],
-                    format_func=lambda x: {
-                        "starter": "Starter - 50 حامل - $49/شهر",
-                        "pro": "Pro - 200 حامل - $149/شهر",
-                        "hospital": "Hospital - غير محدود - $499/شهر",
-                    }[x])
-                submitted_s = st.form_submit_button("✨ إنشاء الحساب", use_container_width=True, type="primary")
-
-            if submitted_s:
-                errors = []
-                if not clinic_name: errors.append("اسم العيادة مطلوب")
-                if not doctor_name: errors.append("اسم الطبيبة مطلوب")
-                if not email_s or "@" not in email_s: errors.append("بريد إلكتروني غير صحيح")
-                if len(password_s) < 6: errors.append("كلمة المرور قصيرة")
-                if password_s != password_s2: errors.append("كلمتا المرور غير متطابقتين")
-
-                if errors:
-                    for e in errors: st.error(e)
-                else:
-                    try:
-                        from core.auth import signup_clinic, AuthError
-                        from core.session import set_user
-
-                        clinic, user_new = signup_clinic(
-                            clinic_name=clinic_name, doctor_name=doctor_name,
-                            email=email_s, password=password_s,
-                            phone=phone, plan=plan
-                        )
-                        set_user(user_new, clinic)
-                        st.success("✅ تم إنشاء العيادة!")
-                        st.balloons()
-                        time.sleep(0.5)
-                        st.rerun()
-                    except Exception as e:
-                        st.error("خطأ: {}".format(str(e)[:200]))
-
+    from views.auth_view import render_auth
+    render_auth()
     st.stop()
 
 # Alert count disabled for performance (0 = no badge)
