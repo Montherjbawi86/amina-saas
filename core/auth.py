@@ -121,6 +121,20 @@ def signup_clinic(
             pass
         raise
 
+    # Audit log
+    try:
+        from services.audit_log import log_action
+        log_action(
+            clinic_id=clinic["id"],
+            user_id=user["id"],
+            action="signup",
+            entity_type="clinic",
+            entity_id=clinic["id"],
+            details={"clinic_name": clinic_name, "plan": plan},
+        )
+    except Exception:
+        pass
+
     return clinic, user
 
 
@@ -165,6 +179,19 @@ def login(email, password, clinic_id=None):
     # Update last_login
     try:
         update("users", {"id": user["id"]}, {"last_login": datetime.utcnow().isoformat()})
+    except Exception:
+        pass
+
+    # Audit log
+    try:
+        from services.audit_log import log_action
+        log_action(
+            clinic_id=user["clinic_id"],
+            user_id=user["id"],
+            action="login",
+            entity_type="session",
+            details={"email": email, "role": user.get("role")},
+        )
     except Exception:
         pass
 

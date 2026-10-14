@@ -300,6 +300,11 @@ elif _nav == "reports":
     import views.reports_view as view_reports
     view_reports.render(clinic, user)
 
+# ============ AUDIT LOG ============
+elif _nav == "audit_log":
+    import views.audit_log_view as view_audit
+    view_audit.render(clinic, user)
+
 # ============ TWO-FACTOR AUTH ============
 elif _nav == "two_factor":
     import views.two_factor_view as view_2fa

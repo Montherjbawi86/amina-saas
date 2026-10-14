@@ -1626,6 +1626,7 @@ def render_sidebar(clinic, user, active="dashboard"):
             ("vaccination_schedule", "💉 جدول التطعيمات"),
             ("reports", "📊 التقارير"),
             ("two_factor", "🛡️ الحماية الثنائية"),
+            ("audit_log", "📝 سجل التغييرات"),
             ("admin", "⚙️ الإدارة"),
         ]
 
