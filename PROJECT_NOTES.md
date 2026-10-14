@@ -228,3 +228,42 @@ Files, Alerts, Users,
 - #12 Vaccination Schedule
 - #13 Stripe/Paddle
 
+
+---
+
+## ✅ #11 Reports Dashboard (2026-10-15)
+
+### الملفات:
+- services/reports.py
+- views/reports_view.py
+
+### التعديلات:
+- app.py (قسم reports)
+- core/ui.py (زر sidebar)
+
+### الميزات:
+- ✅ فلتر تاريخ (7 presets + custom)
+- ✅ 4 تبويبات: نظرة عامة / تحاليل / حوامل / صور+شهادات
+- ✅ 9 KPIs + charts (Plotly)
+- ✅ CSV export لكل تقرير
+- ✅ تكامل مع كل الميزات (labs, ultrasound, certs)
+
+### ملاحظة:
+- Reports يعمل بشكل مستقل عن analytics القديم
+- analytics_view.py موجود كـ legacy
+
+---
+
+## 📊 إجمالي الميزات المكتملة (2026-10-15)
+
+**25+ ميزة:**
+Multi-tenancy, Auth, Patients, Visits, AI, PDF, PWA, WhatsApp, QR,
+Prescriptions, Vaccinations, Growth, Analytics, Appointments, Messaging,
+Files, Alerts, Users, Excel (#10), Certificate (#5), Lab Tests (#4),
+Ultrasound (#9), 2FA (#7), Reports (#11), UI 2.0, Print mode
+
+**المتبقي:**
+- #12 Vaccination Schedule
+- #6 Google Calendar
+- #8 i18n
+- #13 Stripe/Paddle
