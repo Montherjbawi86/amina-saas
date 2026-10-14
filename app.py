@@ -285,6 +285,11 @@ elif _nav == "ultrasound":
     import views.ultrasound_view as view_us
     view_us.render(clinic, user)
 
+# ============ VACCINATION SCHEDULE ============
+elif _nav == "vaccination_schedule":
+    import views.vaccination_schedule_view as view_vax
+    view_vax.render(clinic, user)
+
 # ============ REPORTS ============
 elif _nav == "reports":
     import views.reports_view as view_reports

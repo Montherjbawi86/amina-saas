@@ -10,10 +10,67 @@ class VaccinationError(Exception):
     pass
 
 
-# Standard pregnancy vaccination schedule (by gestational week)
+# Standard pregnancy vaccination & supplement schedule
+# Based on WHO + CDC + Iraqi MOH guidelines
 DEFAULT_SCHEDULE = [
-    {"name": "Tdap (كزاز + دفتيريا + سعال ديكي)", "week": 27, "dose": 1},
-    {"name": "Influenza (إنفلونزا)", "week": 14, "dose": 1},
+    # === Core vaccinations ===
+    {
+        "name": "Tdap (كزاز + دفتيريا + سعال ديكي)",
+        "name_en": "Tdap",
+        "week": 27, "dose": 1,
+        "category": "vaccine",
+        "notes": "الجرعة الواحدة قبل الولادة بـ 4-6 أسابيع",
+    },
+    {
+        "name": "Influenza (إنفلونزا)",
+        "name_en": "Influenza",
+        "week": 14, "dose": 1,
+        "category": "vaccine",
+        "notes": "يُعطى في أي وقت، الأفضل في موسم الإنفلونزا",
+    },
+    {
+        "name": "COVID-19",
+        "name_en": "COVID-19",
+        "week": 20, "dose": 1,
+        "category": "vaccine",
+        "notes": "حسب البروتوكول المحلي",
+    },
+    {
+        "name": "Tetanus Toxoid (كزاز)",
+        "name_en": "TT",
+        "week": 24, "dose": 1,
+        "category": "vaccine",
+        "notes": "إذا لم تُطعم سابقاً",
+    },
+    {
+        "name": "Rh Immunoglobulin (إميونوغلوبيولين)",
+        "name_en": "RhIg",
+        "week": 28, "dose": 1,
+        "category": "vaccine",
+        "notes": "فقط للحوامل Rh-negative",
+    },
+    {
+        "name": "Hepatitis B (التهاب الكبد B)",
+        "name_en": "HepB",
+        "week": 12, "dose": 1,
+        "category": "vaccine",
+        "notes": "إذا لم تُطعم سابقاً",
+    },
+    # === Core supplements ===
+    {
+        "name": "Vitamin D (فيتامين D)",
+        "name_en": "Vit D",
+        "week": 8, "dose": 1,
+        "category": "supplement",
+        "notes": "1000-2000 IU يومياً",
+    },
+    {
+        "name": "Iron + Folic Acid (حديد + فوليك)",
+        "name_en": "Fe+Fol",
+        "week": 8, "dose": 1,
+        "category": "supplement",
+        "notes": "60mg حديد + 400μg فوليك يومياً",
+    },
 ]
 
 
@@ -98,6 +155,12 @@ def auto_schedule_defaults(clinic_id, patient_id, edd_date, doctor_id=None):
         # Compute date: 280 - (week * 7) days before EDD
         days_before = 280 - (item["week"] * 7)
         scheduled = edd - timedelta(days=days_before)
+
+        # Skip if already in the past (before today) — but keep within 30 days
+        today = date.today()
+        if scheduled < today - timedelta(days=30):
+            continue
+
         try:
             v = create_vaccination(
                 clinic_id, patient_id, item["name"],
@@ -105,6 +168,7 @@ def auto_schedule_defaults(clinic_id, patient_id, edd_date, doctor_id=None):
                 scheduled_for=scheduled.isoformat(),
                 status="pending",
                 doctor_id=doctor_id,
+                notes=item.get("notes"),
             )
             created.append(v)
         except VaccinationError:
