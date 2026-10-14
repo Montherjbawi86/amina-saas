@@ -215,12 +215,100 @@ def _render_detail(clinic, user):
     # Actions row
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        if st.button("📥 PDF", use_container_width=True, key="det_pdf_btn"):
-            st.session_state["patient_view"] = "pdf"
-            st.rerun()
+        if st.button("📄 تقرير شامل PDF", use_container_width=True,
+                     type="primary", key="det_full_pdf_btn"):
+            with st.spinner("⏳ جاري تجهيز التقرير الشامل..."):
+                try:
+                    from services.pdf_reports import generate_patient_report
+                    from core.db import db
+
+                    # 1. Fetch visits
+                    _visits = list_visits_cached(clinic["id"], pid, limit=50)
+
+                    # 2. Fetch lab tests
+                    try:
+                        _labs = db().table("lab_tests").select("*").eq(
+                            "clinic_id", clinic["id"]
+                        ).eq("patient_id", pid).order("test_date", desc=True).limit(30).execute().data
+                    except Exception:
+                        _labs = []
+
+                    # 3. Fetch ultrasound
+                    try:
+                        _us = db().table("ultrasound_images").select("*").eq(
+                            "clinic_id", clinic["id"]
+                        ).eq("patient_id", pid).order("image_date", desc=True).limit(6).execute().data
+                    except Exception:
+                        _us = []
+
+                    # 4. Fetch vaccinations
+                    try:
+                        _vax = db().table("vaccinations").select("*").eq(
+                            "clinic_id", clinic["id"]
+                        ).eq("patient_id", pid).order("scheduled_for").limit(30).execute().data
+                    except Exception:
+                        _vax = []
+
+                    # 5. Fetch prescriptions
+                    try:
+                        _presc = db().table("prescriptions").select("*").eq(
+                            "clinic_id", clinic["id"]
+                        ).eq("patient_id", pid).order("issued_at", desc=True).limit(10).execute().data
+                    except Exception:
+                        _presc = []
+
+                    # 6. Generate PDF
+                    _pdf = generate_patient_report(
+                        patient=p,
+                        visits=_visits,
+                        alerts=None,
+                        ai_result=None,
+                        clinic=clinic,
+                        lab_tests=_labs,
+                        ultrasound=_us,
+                        vaccinations=_vax,
+                        prescriptions=_presc,
+                    )
+
+                    st.session_state["_full_report_pdf"] = _pdf
+                    st.session_state["_full_report_name"] = "report_{}_{}.pdf".format(
+                        p.get("full_name", "patient").replace(" ", "_")[:20],
+                        p.get("id", "")[:8]
+                    )
+                    st.success("✅ التقرير جاهز!")
+                    st.rerun()
+                except Exception as e:
+                    st.error("❌ {}".format(str(e)[:200]))
+
     with c2:
         if st.button("⬅️ القائمة", use_container_width=True, key="det_back"):
             st.session_state["patient_view"] = "list"
+            st.rerun()
+
+    # Download button if PDF is ready
+    if st.session_state.get("_full_report_pdf"):
+        _pdf = st.session_state["_full_report_pdf"]
+        _fname = st.session_state.get("_full_report_name", "report.pdf")
+        _size_kb = len(_pdf) / 1024.0
+
+        st.markdown("---")
+        c_a, c_b = st.columns([3, 1])
+        with c_a:
+            st.info("📄 التقرير الشامل جاهز — **{:.1f} KB**".format(_size_kb))
+        with c_b:
+            st.download_button(
+                "⬇️ تحميل",
+                data=_pdf,
+                file_name=_fname,
+                mime="application/pdf",
+                use_container_width=True,
+                type="primary",
+                key="det_full_pdf_download"
+            )
+
+        if st.button("🗑️ حذف من الذاكرة", key="det_full_pdf_clear"):
+            st.session_state.pop("_full_report_pdf", None)
+            st.session_state.pop("_full_report_name", None)
             st.rerun()
 
     # Recent visits (compact)

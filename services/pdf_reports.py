@@ -110,12 +110,17 @@ def _styles():
 # PDF BUILDER
 # ============================================
 class PatientReportBuilder:
-    def __init__(self, patient, visits, alerts=None, ai_result=None, clinic=None):
+    def __init__(self, patient, visits, alerts=None, ai_result=None, clinic=None,
+                 lab_tests=None, ultrasound=None, vaccinations=None, prescriptions=None):
         self.patient = patient or {}
         self.visits = visits or []
         self.alerts = alerts or []
         self.ai_result = ai_result
         self.clinic = clinic or {}
+        self.lab_tests = lab_tests or []
+        self.ultrasound = ultrasound or []
+        self.vaccinations = vaccinations or []
+        self.prescriptions = prescriptions or []
         self.styles = _styles()
         self.buffer = BytesIO()
 
@@ -341,6 +346,244 @@ class PatientReportBuilder:
         story.append(Spacer(1, 12))
         return story
 
+    def _labs_section(self):
+        """Lab tests table"""
+        if not self.lab_tests:
+            return []
+        story = []
+        story.append(Paragraph(_ar("🔬 التحاليل المخبرية ({})".format(len(self.lab_tests))), self.styles["h1"]))
+        story.append(Spacer(1, 6))
+
+        header = [_ar("التاريخ"), _ar("التحليل"), _ar("القيمة"), _ar("الحالة")]
+        rows = [header]
+        for t in self.lab_tests[:20]:
+            is_abn = t.get("is_abnormal", False)
+            severity = t.get("severity", "normal")
+
+            status_text = "طبيعي"
+            status_icon = "✓"
+            if is_abn:
+                status_icon = "⚠"
+                status_text = {
+                    "severe": "شديد",
+                    "moderate": "متوسط",
+                    "mild": "خفيف",
+                }.get(severity, "غير طبيعي")
+
+            # Build value summary
+            rv = t.get("result_value") or {}
+            if isinstance(rv, dict):
+                parts = []
+                for k, v in list(rv.items())[:3]:
+                    parts.append("{}: {}".format(k, v))
+                val_str = " | ".join(parts) if parts else "—"
+            else:
+                val_str = str(rv)[:40]
+
+            rows.append([
+                _ar((t.get("test_date") or "—")[:10]),
+                _ar((t.get("test_name") or "—")[:25]),
+                _ar(val_str[:35]),
+                _ar("{} {}".format(status_icon, status_text)),
+            ])
+
+        t = Table(rows, colWidths=[2.3*cm, 3.5*cm, 4.5*cm, 2.7*cm])
+        t.setStyle(TableStyle([
+            ("FONTNAME", (0,0), (-1,-1), ARABIC_FONT),
+            ("FONTSIZE", (0,0), (-1,-1), 8),
+            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#7B2D8E")),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+            ("ALIGN", (0,0), (-1,-1), "RIGHT"),
+            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+            ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor("#E5E7EB")),
+            ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.white, colors.HexColor("#F9FAFB")]),
+            ("LEFTPADDING", (0,0), (-1,-1), 4),
+            ("RIGHTPADDING", (0,0), (-1,-1), 4),
+            ("TOPPADDING", (0,0), (-1,-1), 4),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 4),
+        ]))
+
+        # Highlight abnormal rows
+        for i, t_item in enumerate(self.lab_tests[:20], start=1):
+            if t_item.get("is_abnormal"):
+                t.setStyle(TableStyle([
+                    ("TEXTCOLOR", (3,i), (3,i), colors.HexColor("#DC2626")),
+                    ("BACKGROUND", (3,i), (3,i), colors.HexColor("#FEF2F2")),
+                ]))
+
+        story.append(t)
+        story.append(Spacer(1, 12))
+        return story
+
+    def _vaccinations_section(self):
+        """Vaccinations table"""
+        if not self.vaccinations:
+            return []
+        story = []
+        story.append(Paragraph(_ar("💉 التطعيمات ({})".format(len(self.vaccinations))), self.styles["h1"]))
+        story.append(Spacer(1, 6))
+
+        header = [_ar("التطعيم"), _ar("الجرعة"), _ar("مجدول"), _ar("الحالة")]
+        rows = [header]
+        for v in self.vaccinations[:20]:
+            status = v.get("status", "pending")
+            status_label = {
+                "pending": "⏳ منتظر",
+                "given": "✅ تم",
+                "missed": "❌ فائت",
+                "skipped": "⏭️ متجاوز",
+            }.get(status, status)
+
+            rows.append([
+                _ar((v.get("vaccine_name") or "—")[:30]),
+                _ar(str(v.get("dose_number") or 1)),
+                _ar((v.get("scheduled_for") or "—")[:10]),
+                _ar(status_label),
+            ])
+
+        t = Table(rows, colWidths=[5*cm, 1.5*cm, 3*cm, 3*cm])
+        t.setStyle(TableStyle([
+            ("FONTNAME", (0,0), (-1,-1), ARABIC_FONT),
+            ("FONTSIZE", (0,0), (-1,-1), 8),
+            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#7B2D8E")),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+            ("ALIGN", (0,0), (-1,-1), "RIGHT"),
+            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+            ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor("#E5E7EB")),
+            ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.white, colors.HexColor("#F9FAFB")]),
+            ("LEFTPADDING", (0,0), (-1,-1), 4),
+            ("RIGHTPADDING", (0,0), (-1,-1), 4),
+            ("TOPPADDING", (0,0), (-1,-1), 4),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 4),
+        ]))
+        story.append(t)
+        story.append(Spacer(1, 12))
+        return story
+
+    def _ultrasound_section(self):
+        """Ultrasound images grid"""
+        if not self.ultrasound:
+            return []
+        story = []
+        story.append(Paragraph(_ar("📸 صور السونار ({})".format(len(self.ultrasound))), self.styles["h1"]))
+        story.append(Spacer(1, 6))
+
+        # Try to load and resize images
+        try:
+            from reportlab.lib.utils import ImageReader
+            import urllib.request
+
+            images_data = []
+            for u in self.ultrasound[:6]:  # Max 6 images
+                url = u.get("public_url")
+                if not url:
+                    continue
+                try:
+                    with urllib.request.urlopen(url, timeout=5) as resp:
+                        img_data = resp.read()
+                        buf = BytesIO(img_data)
+                        img = Image(buf, width=4.5*cm, height=4.5*cm)
+                        images_data.append(img)
+                except Exception:
+                    continue
+
+            if images_data:
+                # Grid 3 columns x 2 rows
+                grid_rows = []
+                for i in range(0, len(images_data), 3):
+                    row = images_data[i:i+3]
+                    while len(row) < 3:
+                        row.append("")
+                    grid_rows.append(row)
+
+                t = Table(grid_rows, colWidths=[5*cm, 5*cm, 5*cm])
+                t.setStyle(TableStyle([
+                    ("ALIGN", (0,0), (-1,-1), "CENTER"),
+                    ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+                    ("LEFTPADDING", (0,0), (-1,-1), 4),
+                    ("RIGHTPADDING", (0,0), (-1,-1), 4),
+                    ("TOPPADDING", (0,0), (-1,-1), 4),
+                    ("BOTTOMPADDING", (0,0), (-1,-1), 4),
+                ]))
+                story.append(t)
+                story.append(Spacer(1, 6))
+
+                # Captions
+                for u in self.ultrasound[:6]:
+                    caption = u.get("caption") or "سونار"
+                    date_str = (u.get("image_date") or "—")[:10]
+                    weeks = u.get("gestational_weeks")
+                    line = "📸 {} — {} {}".format(
+                        caption[:40], date_str,
+                        "({} أسبوع)".format(weeks) if weeks else ""
+                    )
+                    story.append(Paragraph(_ar(line), self.styles["small"]))
+
+            else:
+                story.append(Paragraph(_ar("لا يمكن تحميل الصور"), self.styles["small"]))
+        except Exception as e:
+            story.append(Paragraph(_ar("خطأ في تحميل الصور: {}".format(str(e)[:50])), self.styles["small"]))
+
+        story.append(Spacer(1, 12))
+        return story
+
+    def _prescriptions_section(self):
+        """Prescriptions table"""
+        if not self.prescriptions:
+            return []
+        story = []
+        story.append(Paragraph(_ar("💊 الوصفات ({})".format(len(self.prescriptions))), self.styles["h1"]))
+        story.append(Spacer(1, 6))
+
+        for p in self.prescriptions[:10]:
+            date_str = (p.get("issued_at") or "—")[:10]
+            diag = p.get("diagnosis") or "—"
+
+            meds = p.get("medications") or []
+            if isinstance(meds, list):
+                meds_strs = []
+                for m in meds[:5]:
+                    if isinstance(m, dict):
+                        name = m.get("name", "")
+                        dose = m.get("dose", "")
+                        meds_strs.append("{} {}".format(name, dose).strip())
+                    else:
+                        meds_strs.append(str(m))
+                meds_text = " · ".join(meds_strs) if meds_strs else "—"
+            else:
+                meds_text = str(meds)[:80]
+
+            data = [[
+                Paragraph(_ar("📅 {}".format(date_str)), ParagraphStyle(
+                    "presc_date", fontName=ARABIC_FONT, fontSize=9, leading=12,
+                    textColor=colors.HexColor("#5A1F6B"), alignment=TA_RIGHT)),
+                Paragraph(_ar("التشخيص: {}".format(diag[:60])), ParagraphStyle(
+                    "presc_diag", fontName=ARABIC_FONT, fontSize=9, leading=12,
+                    alignment=TA_RIGHT)),
+            ], [
+                Paragraph(_ar("💊 {}".format(meds_text[:120])), ParagraphStyle(
+                    "presc_meds", fontName=ARABIC_FONT, fontSize=8, leading=11,
+                    alignment=TA_RIGHT)),
+                "",
+            ]]
+            t = Table(data, colWidths=[4*cm, 9*cm])
+            t.setStyle(TableStyle([
+                ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#F5F0F7")),
+                ("SPAN", (0,1), (1,1)),
+                ("ALIGN", (0,0), (-1,-1), "RIGHT"),
+                ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+                ("LEFTPADDING", (0,0), (-1,-1), 6),
+                ("RIGHTPADDING", (0,0), (-1,-1), 6),
+                ("TOPPADDING", (0,0), (-1,-1), 5),
+                ("BOTTOMPADDING", (0,0), (-1,-1), 5),
+                ("BOX", (0,0), (-1,-1), 0.3, colors.HexColor("#E5E7EB")),
+            ]))
+            story.append(t)
+            story.append(Spacer(1, 4))
+
+        story.append(Spacer(1, 8))
+        return story
+
     def _footer(self, canvas, doc):
         """Page footer"""
         canvas.saveState()
@@ -377,6 +620,10 @@ class PatientReportBuilder:
         story += self._patient_card()
         story += self._alerts_section()
         story += self._visits_section()
+        story += self._labs_section()
+        story += self._vaccinations_section()
+        story += self._ultrasound_section()
+        story += self._prescriptions_section()
         story += self._ai_section()
 
         doc.build(story, onFirstPage=self._footer, onLaterPages=self._footer)
@@ -388,14 +635,20 @@ class PatientReportBuilder:
 # ============================================
 # PUBLIC API
 # ============================================
-def generate_patient_report(patient, visits, alerts=None, ai_result=None, clinic=None):
+def generate_patient_report(patient, visits, alerts=None, ai_result=None, clinic=None,
+                             lab_tests=None, ultrasound=None, vaccinations=None,
+                             prescriptions=None):
     """
-    Generate a patient report PDF.
+    Generate a patient report PDF (comprehensive).
     Returns: bytes (PDF content)
     """
     builder = PatientReportBuilder(
         patient=patient, visits=visits,
-        alerts=alerts or [], ai_result=ai_result, clinic=clinic or {}
+        alerts=alerts or [], ai_result=ai_result, clinic=clinic or {},
+        lab_tests=lab_tests or [],
+        ultrasound=ultrasound or [],
+        vaccinations=vaccinations or [],
+        prescriptions=prescriptions or [],
     )
     return builder.build()
 
