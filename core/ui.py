@@ -1296,6 +1296,7 @@ def render_sidebar(clinic, user, active="dashboard"):
             ("certificate", "📄 شهادة حمل"),
             ("lab_tests", "🔬 التحاليل المخبرية"),
             ("ultrasound", "📸 صور السونار"),
+            ("two_factor", "🛡️ الحماية الثنائية"),
             ("admin", "⚙️ الإدارة"),
         ]
 

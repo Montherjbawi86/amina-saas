@@ -93,6 +93,63 @@ except Exception:
 user = get_current_user()
 clinic = get_current_clinic()
 
+# ============ 2FA VERIFICATION GATE ============
+# If user is logged in AND has 2FA enabled AND hasn't verified yet -> show gate
+if user and clinic:
+    try:
+        from services.two_factor import is_2fa_enabled, verify_any_code
+        _2fa_verified = st.session_state.get("_2fa_verified_user")
+        if is_2fa_enabled(user["id"]) and _2fa_verified != user["id"]:
+            # Show 2FA gate
+            st.markdown("""
+            <div style="max-width:480px;margin:3rem auto;text-align:center;">
+                <div style="font-size:4rem;">🛡️</div>
+                <h2 style="color:#0F172A;margin:0.5rem 0;">التحقق الثنائي</h2>
+                <p style="color:#64748B;margin-bottom:1.5rem;">
+                    أدخل الرمز من تطبيق المصادقة على هاتفك
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            c1, c2, c3 = st.columns([1, 2, 1])
+            with c2:
+                with st.form("2fa_gate_form"):
+                    _code = st.text_input(
+                        "الرمز (6 أرقام) أو رمز احتياطي",
+                        placeholder="123456",
+                        max_chars=20,
+                        key="gate_2fa_code"
+                    )
+                    _submitted = st.form_submit_button(
+                        "🔓 تحقق", use_container_width=True, type="primary"
+                    )
+
+                if _submitted:
+                    if not _code or not _code.strip():
+                        st.error("⚠️ أدخل الرمز")
+                    else:
+                        is_valid, method = verify_any_code(user["id"], _code.strip())
+                        if is_valid:
+                            st.session_state["_2fa_verified_user"] = user["id"]
+                            if method == "backup":
+                                st.warning("⚠️ تم استخدام رمز احتياطي — بقي لديك {} رموز".format(
+                                    __import__("services.two_factor", fromlist=["get_remaining_backup_codes"]).get_remaining_backup_codes(user["id"])
+                                ))
+                            st.success("✅ تم التحقق")
+                            st.rerun()
+                        else:
+                            st.error("❌ الرمز غير صحيح")
+
+                if st.button("🚪 تسجيل الخروج", use_container_width=True, key="gate_logout"):
+                    from core.session import logout
+                    st.session_state.pop("_2fa_verified_user", None)
+                    logout()
+
+            st.stop()
+    except Exception as _e:
+        # On any error, don't block login (fail-safe)
+        pass
+
 # ============ GUEST VIEW (Login/Signup) ============
 if not user or not clinic:
     import time
@@ -190,6 +247,7 @@ if st.session_state.get("nav_section") is None:
 
 _selected = render_sidebar(clinic, user, active=st.session_state.get("nav_section", "dashboard"))
 if _selected == "__logout__":
+    st.session_state.pop("_2fa_verified_user", None)
     logout()
 
 modern_navbar(user, clinic, alert_count=_critical_count)
@@ -307,6 +365,11 @@ elif _nav == "lab_tests":
 elif _nav == "ultrasound":
     import views.ultrasound_view as view_us
     view_us.render(clinic, user)
+
+# ============ TWO-FACTOR AUTH ============
+elif _nav == "two_factor":
+    import views.two_factor_view as view_2fa
+    view_2fa.render(clinic, user)
 
 # ============ ADMIN ============
 elif _nav == "admin":
