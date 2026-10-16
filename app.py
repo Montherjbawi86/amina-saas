@@ -305,6 +305,11 @@ elif _nav == "growth_charts":
     import views.growth_view as view_growth
     view_growth.render(clinic, user)
 
+# ============ MEDICAL SUITE ============
+elif _nav == "medical_suite":
+    import views.medical_suite_view as view_medical
+    view_medical.render(clinic, user)
+
 # ============ REPORTS ============
 elif _nav == "reports":
     import views.reports_view as view_reports
