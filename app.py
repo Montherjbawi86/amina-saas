@@ -300,6 +300,11 @@ elif _nav == "newborns":
     import views.newborns_view as view_nb
     view_nb.render(clinic, user)
 
+# ============ GROWTH CHARTS ============
+elif _nav == "growth_charts":
+    import views.growth_view as view_growth
+    view_growth.render(clinic, user)
+
 # ============ REPORTS ============
 elif _nav == "reports":
     import views.reports_view as view_reports

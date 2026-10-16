@@ -31,6 +31,27 @@ RISK_COLORS = {
 def inject_css():
     st.markdown("""
 <style>
+    /* ============ FULL ANTI-DANCE v2 ============ */
+    html, body, .stApp, .main {
+        overflow-anchor: none !important;
+    }
+
+    * {
+        animation: none !important;
+        animation-duration: 0s !important;
+        animation-delay: 0s !important;
+        transition: none !important;
+        transition-duration: 0s !important;
+    }
+
+    /* Selective transforms only for hover */
+    button:hover { transform: translateY(-1px) !important; }
+
+    /* Kill fadeDown/fadeUp specifically */
+    .page-header-v2 { animation: none !important; transition: none !important; }
+    .kpi-card-v2 { animation: none !important; transition: none !important; }
+    .hero { animation: none !important; }
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 * { font-family: 'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif !important; }
@@ -1451,7 +1472,16 @@ section[data-testid="stSidebar"] h3 {
     .main .block-container {
         padding: 1.5rem 2rem 3rem 2rem !important;
     }
-</style>
+
+    /* ============ NUCLEAR ANTI-DANCE ============ */
+    *, *::before, *::after {
+        animation-duration: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition-property: none !important;
+        transition-duration: 0s !important;
+    }
+    /* ============ END ============ */
+    </style>
     """, unsafe_allow_html=True)
 
 
@@ -1647,6 +1677,7 @@ def render_sidebar(clinic, user, active="dashboard"):
             ("ultrasound", "📸 صور السونار"),
             ("vaccination_schedule", "💉 جدول التطعيمات"),
             ("newborns", "👶 سجل المواليد"),
+            ("growth_charts", "📈 منحنيات النمو"),
             ("reports", "📊 التقارير"),
             ("two_factor", "🛡️ الحماية الثنائية"),
             ("audit_log", "📝 سجل التغييرات"),
@@ -1831,26 +1862,12 @@ def footer_landing():
 # ============================================
 
 def page_header_v2(title, subtitle=None, icon="📋", badge=None):
-    """Simple page header — uses native Streamlit (no animation, no dance)"""
-    # Use columns for layout
-    col1, col2 = st.columns([5, 1])
-
-    with col1:
-        st.markdown("## {} {}".format(icon, title))
-        if subtitle:
-            st.caption(subtitle)
-
-    with col2:
-        if badge:
-            st.markdown("""
-            <div style="text-align:right;padding-top:0.5rem;">
-                <span style="background:#F0FDF4;color:#15803D;padding:0.25rem 0.7rem;
-                            border-radius:999px;font-size:0.75rem;font-weight:700;
-                            border:1px solid #BBF7D0;">{}</span>
-            </div>
-            """.format(badge), unsafe_allow_html=True)
-
-    st.write("")  # small spacer
+    """Minimal — no columns, no HTML injection"""
+    text = "## {} {}".format(icon, title) if icon else "## " + title
+    st.markdown(text)
+    if subtitle:
+        st.caption(subtitle)
+    st.write("")
 
 
 def kpi_card_v2(icon, value, label, color=None):

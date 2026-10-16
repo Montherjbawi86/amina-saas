@@ -1,334 +1,783 @@
 # -*- coding: utf-8 -*-
-"""Fetal growth view with WHO reference curves"""
-import time
+"""
+Fetal Growth Charts View
+منحنيات نمو الجنين + معايير WHO
+"""
 from datetime import date, datetime
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
+from core.ui import page_header_v2, kpi_card_v2, empty_state, section_header_v2
+from core.db import db
 from services.growth import (
-    create_measurement, list_measurements, delete_measurement,
-    get_fundal_height_percentile, get_fetal_weight_percentile,
-    get_reference_curve, GrowthError,
+    create_measurement, update_measurement, list_measurements,
+    delete_measurement, analyze_measurement, get_who_curve,
+    get_patient_chart_data, get_patient_summary,
 )
-from services.patients import list_patients_cached, get_patient_summary_cached
-from core.cache import clear_all, show_cache_status
-
-
-def render(clinic, user):
-    """Render growth tab"""
-    pid = st.session_state.get("selected_patient_id")
-
-    if not pid:
-        st.markdown("### 📈 نمو الجنين")
-        st.info("👉 اختر حاملاً من تبويب **👩 الحوامل** أولاً")
-        return
-
-    p = get_patient_summary_cached(clinic["id"], pid)
-    if not p:
-        st.info("👉 اختر حاملاً من تبويب **👩 الحوامل**")
-        return
-
-    st.markdown("### 📈 نمو الجنين — {}".format(p["full_name"]))
-    st.caption(p["gestational_display"])
-
-    # Tabs: view / add
-    tab_chart, tab_add, tab_table = st.tabs(["📊 المخططات", "➕ قياس جديد", "📋 الجدول"])
-
-    with tab_chart:
-        _render_charts(clinic, p)
-
-    with tab_add:
-        _render_add(clinic, user, p)
-
-    with tab_table:
-        _render_table(clinic, p)
 
 
 # ============================================
-# CHARTS
+# HELPERS
 # ============================================
-def _render_charts(clinic, p):
-    """Show reference curves + patient measurements"""
-    show_cache_status("growth_cache")
 
-    measurements = list_measurements(clinic["id"], p["id"])
-    ref = get_reference_curve()
+def _fetch_patients(clinic_id):
+    try:
+        return (
+            db().table("patients")
+            .select("id,full_name,phone,lmp,edd")
+            .eq("clinic_id", clinic_id)
+            .eq("is_active", True)
+            .order("full_name")
+            .execute()
+            .data or []
+        )
+    except Exception:
+        return []
 
-    # ============ FUNDAL HEIGHT CHART ============
-    st.markdown("#### 📏 ارتفاع الرحم (Fundal Height)")
-    st.caption("مقارنة مع منحنيات WHO (p10 - p50 - p90)")
 
-    fig1 = go.Figure()
+def _gest_age_display(week):
+    if not week:
+        return "—"
+    return "أسبوع {}".format(int(week))
 
-    # Reference bands
-    fig1.add_trace(go.Scatter(
-        x=ref["weeks"], y=ref["fh_p90"],
-        mode="lines", line=dict(color="#F59E0B", dash="dash", width=1),
-        name="P90 (عالية)", hovertemplate="%{x}w: %{y}cm<extra></extra>"
-    ))
-    fig1.add_trace(go.Scatter(
-        x=ref["weeks"], y=ref["fh_p10"],
-        mode="lines", line=dict(color="#F59E0B", dash="dash", width=1),
-        fill="tonexty", fillcolor="rgba(245,158,11,0.1)",
-        name="P10 (منخفضة)", hovertemplate="%{x}w: %{y}cm<extra></extra>"
-    ))
-    fig1.add_trace(go.Scatter(
-        x=ref["weeks"], y=ref["fh_p50"],
-        mode="lines", line=dict(color="#10B981", width=2),
-        name="P50 (متوسط)", hovertemplate="%{x}w: %{y}cm<extra></extra>"
-    ))
+
+# ============================================
+# CHART BUILDER
+# ============================================
+
+def _build_growth_chart(measure_type, patient_data, title, unit, color="#16A34A"):
+    """Build a plotly chart: WHO reference + patient measurements"""
+
+    curve = get_who_curve(measure_type)
+    if not curve:
+        return None
+
+    fig = go.Figure()
 
     # Patient data
-    if measurements:
-        weeks = [m["gestational_week"] for m in measurements if m.get("fundal_height_cm")]
-        values = [m["fundal_height_cm"] for m in measurements if m.get("fundal_height_cm")]
-        if weeks:
-            fig1.add_trace(go.Scatter(
-                x=weeks, y=values,
-                mode="lines+markers",
-                line=dict(color="#0EA5A0", width=3),
-                marker=dict(size=12, color="#0EA5A0", line=dict(color="white", width=2)),
-                name="قياسات الحامل", hovertemplate="أسبوع %{x}: %{y}cm<extra></extra>"
-            ))
+    weeks_p = patient_data.get("weeks", [])
+    values_p = patient_data.get(measure_type, [])
 
-    fig1.update_layout(
-        height=380,
-        margin=dict(l=20, r=20, t=20, b=40),
-        xaxis_title="عمر الحمل (أسبوع)",
-        yaxis_title="ارتفاع الرحم (سم)",
+    # Filter out None values
+    filtered = [(w, v) for w, v in zip(weeks_p, values_p) if v is not None]
+    if filtered:
+        p_weeks, p_values = zip(*filtered)
+
+        # Patient line
+        fig.add_trace(go.Scatter(
+            x=p_weeks, y=p_values,
+            mode="lines+markers",
+            name="قياسات الحامل",
+            line=dict(color=color, width=3),
+            marker=dict(size=12, color=color, line=dict(color="white", width=2)),
+            hovertemplate="<b>%{x} أسبوع</b><br>القيمة: %{y} " + unit + "<extra></extra>",
+        ))
+
+    # WHO reference (P10, P50, P90)
+    fig.add_trace(go.Scatter(
+        x=curve["weeks"], y=curve["p90"],
+        mode="lines", name="P90",
+        line=dict(color="#F59E0B", width=2, dash="dash"),
+        hovertemplate="P90: %{y} " + unit + "<extra></extra>",
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=curve["weeks"], y=curve["p50"],
+        mode="lines", name="P50 (المتوسط)",
+        line=dict(color="#10B981", width=2),
+        hovertemplate="P50: %{y} " + unit + "<extra></extra>",
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=curve["weeks"], y=curve["p10"],
+        mode="lines", name="P10",
+        line=dict(color="#F59E0B", width=2, dash="dash"),
+        fill="tonexty",
+        fillcolor="rgba(16,185,129,0.08)",
+        hovertemplate="P10: %{y} " + unit + "<extra></extra>",
+    ))
+
+    fig.update_layout(
+        title=dict(text=title, font=dict(size=14, color="#0F172A"), x=0.5),
+        height=350,
+        margin=dict(l=40, r=20, t=50, b=40),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        xaxis=dict(
+            title="أسابيع الحمل",
+            showgrid=True, gridcolor="#F1F5F9",
+            range=[10, 42],
+        ),
+        yaxis=dict(
+            title=unit,
+            showgrid=True, gridcolor="#F1F5F9",
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom", y=1.02,
+            xanchor="right", x=1,
+            font=dict(size=10),
+        ),
         hovermode="x unified",
-        legend=dict(orientation="h", y=-0.2)
     )
-    st.plotly_chart(fig1, use_container_width=True)
 
-    # ============ FETAL WEIGHT CHART ============
-    st.markdown("#### ⚖️ وزن الجنين التقديري (EFW)")
-    st.caption("من منحنيات WHO/INTERGROWTH")
-
-    fig2 = go.Figure()
-    fig2.add_trace(go.Scatter(
-        x=ref["weeks"], y=ref["fw_p90"],
-        mode="lines", line=dict(color="#F59E0B", dash="dash", width=1),
-        name="P90"
-    ))
-    fig2.add_trace(go.Scatter(
-        x=ref["weeks"], y=ref["fw_p10"],
-        mode="lines", line=dict(color="#F59E0B", dash="dash", width=1),
-        fill="tonexty", fillcolor="rgba(245,158,11,0.1)",
-        name="P10"
-    ))
-    fig2.add_trace(go.Scatter(
-        x=ref["weeks"], y=ref["fw_p50"],
-        mode="lines", line=dict(color="#10B981", width=2),
-        name="P50"
-    ))
-
-    if measurements:
-        w_weeks = [m["gestational_week"] for m in measurements if m.get("estimated_fetal_weight_g")]
-        w_vals = [m["estimated_fetal_weight_g"] for m in measurements if m.get("estimated_fetal_weight_g")]
-        if w_weeks:
-            fig2.add_trace(go.Scatter(
-                x=w_weeks, y=w_vals,
-                mode="lines+markers",
-                line=dict(color="#0EA5A0", width=3),
-                marker=dict(size=12, color="#0EA5A0", line=dict(color="white", width=2)),
-                name="قياسات الحامل"
-            ))
-
-    fig2.update_layout(
-        height=380,
-        margin=dict(l=20, r=20, t=20, b=40),
-        xaxis_title="عمر الحمل (أسبوع)",
-        yaxis_title="وزن الجنين (غرام)",
-        hovermode="x unified",
-        legend=dict(orientation="h", y=-0.2)
-    )
-    st.plotly_chart(fig2, use_container_width=True)
-
-    # ============ LATEST ANALYSIS ============
-    if measurements:
-        st.divider()
-        st.markdown("#### 🔍 آخر تحليل")
-
-        last = measurements[-1]
-        c1, c2, c3 = st.columns(3)
-        c1.metric("عمر الحمل", "{} أسبوع".format(last["gestational_week"]))
-        if last.get("fundal_height_cm"):
-            c2.metric("ارتفاع الرحم", "{} سم".format(last["fundal_height_cm"]))
-        if last.get("estimated_fetal_weight_g"):
-            c3.metric("وزن الجنين", "{} غرام".format(last["estimated_fetal_weight_g"]))
-
-        # Percentile analysis
-        if last.get("fundal_height_cm"):
-            p_info = get_fundal_height_percentile(last["gestational_week"], last["fundal_height_cm"])
-            if p_info:
-                color = p_info["color"]
-                if "high" in p_info["color"].lower() or p_info["percentile"] != "10-90":
-                    st.warning("📏 **ارتفاع الرحم**: {} (Deviation: {} سم)".format(
-                        p_info["label"], p_info["deviation"]))
-                else:
-                    st.success("📏 **ارتفاع الرحم**: {} (Deviation: {} سم)".format(
-                        p_info["label"], p_info["deviation"]))
-
-        if last.get("estimated_fetal_weight_g"):
-            fw = get_fetal_weight_percentile(last["gestational_week"], last["estimated_fetal_weight_g"])
-            if fw:
-                if fw["percentile"] != "10-90":
-                    st.warning("⚖️ **وزن الجنين**: {}".format(fw["label"]))
-                else:
-                    st.success("⚖️ **وزن الجنين**: {}".format(fw["label"]))
-
-    if not measurements:
-        st.info("📭 لا توجد قياسات. أضف قياساً من تبويب **➕ قياس جديد**")
+    return fig
 
 
 # ============================================
-# ADD
+# TABS
 # ============================================
-def _render_add(clinic, user, p):
-    st.markdown("#### ➕ قياس جديد")
 
-    with st.form("new_growth_form"):
-        c1, c2 = st.columns(2)
-        with c1:
-            _gw = p.get("gestational_weeks") or 20
-            try:
-                _gw = int(_gw)
-            except Exception:
-                _gw = 20
-            # Clamp between min and max
-            _gw = max(10, min(42, _gw))
-            week = st.number_input(
-                "عمر الحمل (أسبوع) *",
-                min_value=10, max_value=42,
-                value=_gw,
-                step=1,
-                key="growth_week_input"
-            )
-        with c2:
-            measured_at = st.date_input("تاريخ القياس", value=date.today())
+def _render_charts_tab(clinic, user):
+    """Charts tab — the main feature"""
 
-        st.markdown("##### القياسات الأساسية")
-        c1, c2 = st.columns(2)
-        with c1:
-            fundal_height = st.number_input(
-                "ارتفاع الرحم (سم)",
-                min_value=5.0, max_value=60.0,
-                value=20.0, step=0.5,
-                help="Fundal height"
-            )
-        with c2:
-            efw = st.number_input(
-                "وزن الجنين التقديري (غرام)",
-                min_value=100, max_value=6000,
-                value=1000, step=50,
-                help="Estimated Fetal Weight (EFW)"
-            )
-
-        st.markdown("##### قياسات السونار (اختياري)")
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            bpd = st.number_input("BPD (مم)", min_value=0.0, max_value=120.0, value=0.0, step=0.5)
-        with c2:
-            fl = st.number_input("FL (مم)", min_value=0.0, max_value=100.0, value=0.0, step=0.5)
-        with c3:
-            ac = st.number_input("AC (مم)", min_value=0.0, max_value=400.0, value=0.0, step=1.0)
-
-        afi = st.number_input("AFI (السائل الأمنيوسي، سم)", min_value=0.0, max_value=30.0, value=0.0, step=0.1)
-        notes = st.text_area("ملاحظات", height=80)
-
-        submitted = st.form_submit_button("💾 حفظ القياس", use_container_width=True, type="primary")
-
-    if submitted:
-        try:
-            create_measurement(
-                clinic["id"], p["id"],
-                gestational_week=week,
-                measured_at=measured_at.isoformat(),
-                fundal_height_cm=fundal_height if fundal_height > 0 else None,
-                estimated_fetal_weight_g=int(efw) if efw > 0 else None,
-                biparietal_diameter_mm=bpd if bpd > 0 else None,
-                femur_length_mm=fl if fl > 0 else None,
-                abdominal_circumference_mm=ac if ac > 0 else None,
-                amniotic_fluid_index=afi if afi > 0 else None,
-                notes=notes or None,
-            )
-            clear_all()
-            st.success("✅ تم حفظ القياس")
-            st.balloons()
-            time.sleep(0.8)
-            st.rerun()
-        except GrowthError as e:
-            st.error(str(e))
-        except Exception as e:
-            st.error("خطأ: {}".format(e))
-
-
-# ============================================
-# TABLE
-# ============================================
-def _render_table(clinic, p):
-    st.markdown("#### 📋 جميع القياسات")
-
-    measurements = list_measurements(clinic["id"], p["id"])
-
-    if not measurements:
-        st.info("📭 لا توجد قياسات")
+    patients = _fetch_patients(clinic["id"])
+    if not patients:
+        empty_state("👩", "لا يوجد حوامل", "سجل حاملاً أولاً")
         return
 
+    pmap = {p["id"]: p.get("full_name", "—") for p in patients}
+
+    # Patient selector
+    selected_id = st.selectbox(
+        "👩 اختر حاملاً",
+        options=list(pmap.keys()),
+        format_func=lambda x: pmap[x],
+        key="growth_chart_patient"
+    )
+
+    if not selected_id:
+        return
+
+    # Get patient data
+    patient_data = get_patient_chart_data(clinic["id"], selected_id)
+
+    if not patient_data.get("weeks"):
+        empty_state(
+            "📊",
+            "لا توجد قياسات",
+            "أضف قياسات النمو من تبويب '➕ قياس جديد' لعرض المنحنيات"
+        )
+        return
+
+    # Summary
+    summary = get_patient_summary(clinic["id"], selected_id)
+
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        kpi_card_v2("📊", summary["total"], "عدد القياسات")
+    with c2:
+        kpi_card_v2("📅", _gest_age_display(summary.get("first_week")), "أول قياس")
+    with c3:
+        kpi_card_v2("📅", _gest_age_display(summary.get("last_week")), "آخر قياس")
+    with c4:
+        latest_analysis = summary.get("latest_analysis") or {}
+        diag = latest_analysis.get("diagnosis") or {}
+        status = diag.get("status", "unknown")
+        status_icon = {"normal": "✅", "iugr": "🚨", "macrosomia": "🟡"}.get(status, "ℹ️")
+        kpi_card_v2(status_icon, diag.get("label", "—")[:20], "التشخيص الحالي")
+
+    st.divider()
+
+    # Charts
+    section_header_v2("📊", "منحنيات النمو مع معايير WHO")
+
+    # EFW — the most important
+    fig = _build_growth_chart("efw", patient_data,
+        "⚖️ الوزن المتوقع للجنين (EFW)", "غرام", "#16A34A")
+    if fig:
+        st.plotly_chart(fig, use_container_width=True)
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+        fig = _build_growth_chart("bpd", patient_data,
+            "📏 قطر الرأس (BPD)", "مم", "#0EA5E9")
+        if fig:
+            st.plotly_chart(fig, use_container_width=True)
+
+    with c2:
+        fig = _build_growth_chart("hc", patient_data,
+            "🧠 محيط الرأس (HC)", "مم", "#8B5CF6")
+        if fig:
+            st.plotly_chart(fig, use_container_width=True)
+
+    c3, c4 = st.columns(2)
+
+    with c3:
+        fig = _build_growth_chart("ac", patient_data,
+            "💚 محيط البطن (AC)", "مم", "#F59E0B")
+        if fig:
+            st.plotly_chart(fig, use_container_width=True)
+
+    with c4:
+        fig = _build_growth_chart("fl", patient_data,
+            "🦴 طول عظم الفخذ (FL)", "مم", "#EC4899")
+        if fig:
+            st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()
+
+    # Diagnosis details
+    latest_analysis = summary.get("latest_analysis") or {}
+    diag = latest_analysis.get("diagnosis")
+    if diag:
+        section_header_v2("⚕️", "التشخيص الطبي", badge="آخر قياس")
+
+        color = diag.get("color", "#10B981")
+        st.markdown("""
+        <div style="background:white;border:1px solid {color};border-radius:12px;
+                    padding:1.25rem 1.5rem;border-right:5px solid {color};">
+            <div style="font-size:1.2rem;font-weight:700;color:{color};">
+                {label}
+            </div>
+            <div style="color:#334155;margin-top:0.5rem;font-size:0.95rem;">
+                {details}
+            </div>
+        </div>
+        """.format(
+            color=color,
+            label=diag.get("label", "—"),
+            details=diag.get("details", ""),
+        ), unsafe_allow_html=True)
+
+        recs = diag.get("recommendations", [])
+        if recs:
+            st.write("")
+            st.markdown("##### 💡 التوصيات")
+            for r in recs:
+                st.markdown("  - {}".format(r))
+
+
+def _render_add_tab(clinic, user):
+    """Add a new measurement"""
+
+    patients = _fetch_patients(clinic["id"])
+    if not patients:
+        empty_state("👩", "لا يوجد حوامل", "")
+        return
+
+    pmap = {p["id"]: "{} — {}".format(p.get("full_name", ""), p.get("phone", "")) for p in patients}
+
+    st.markdown("#### ➕ إضافة قياس جديد")
+
+    selected_id = st.selectbox(
+        "👩 الحامل *",
+        options=list(pmap.keys()),
+        format_func=lambda x: pmap[x],
+        key="growth_add_patient"
+    )
+
+    st.markdown("##### 📅 معلومات أساسية")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        measured_at = st.date_input(
+            "تاريخ القياس",
+            value=date.today(),
+            key="growth_add_date"
+        )
+    with c2:
+        gestational_week = st.number_input(
+            "أسابيع الحمل *",
+            min_value=8, max_value=42,
+            value=20, step=1,
+            key="growth_add_week"
+        )
+
+    st.markdown("##### 📏 القياسات (املأ ما توفر)")
+
+    c3, c4 = st.columns(2)
+    with c3:
+        fundal_height = st.number_input(
+            "ارتفاع الرحم (سم)",
+            min_value=0.0, max_value=60.0,
+            value=0.0, step=0.5,
+            key="growth_add_fh"
+        )
+        bpd = st.number_input(
+            "قطر الرأس BPD (مم)",
+            min_value=0.0, max_value=150.0,
+            value=0.0, step=1.0,
+            key="growth_add_bpd"
+        )
+        hc = st.number_input(
+            "محيط الرأس HC (مم)",
+            min_value=0.0, max_value=450.0,
+            value=0.0, step=1.0,
+            key="growth_add_hc"
+        )
+
+    with c4:
+        ac = st.number_input(
+            "محيط البطن AC (مم)",
+            min_value=0.0, max_value=500.0,
+            value=0.0, step=1.0,
+            key="growth_add_ac"
+        )
+        fl = st.number_input(
+            "طول عظم الفخذ FL (مم)",
+            min_value=0.0, max_value=120.0,
+            value=0.0, step=1.0,
+            key="growth_add_fl"
+        )
+        efw = st.number_input(
+            "الوزن المتوقع EFW (غرام)",
+            min_value=0, max_value=6000,
+            value=0, step=50,
+            key="growth_add_efw"
+        )
+
+    afi = st.number_input(
+        "مؤشر السائل الأمنيوسي (AFI)",
+        min_value=0.0, max_value=40.0,
+        value=0.0, step=0.5,
+        key="growth_add_afi"
+    )
+
+    notes = st.text_area(
+        "ملاحظات",
+        placeholder="اختياري...",
+        height=68,
+        key="growth_add_notes"
+    )
+
+    st.write("")
+
+    # === Save button with STRONG debounce (prevents double-click) ===
+    import time as _time
+
+    _last_save = st.session_state.get("_growth_last_save_time", 0)
+    _now = _time.time()
+    _cooldown = 3.0  # seconds
+
+    def _do_save_growth():
+        st.session_state["_growth_last_save_time"] = _time.time()
+        try:
+            create_measurement(
+                clinic_id=clinic["id"],
+                patient_id=selected_id,
+                measured_at=measured_at,
+                gestational_week=int(gestational_week),
+                fundal_height_cm=fundal_height,
+                estimated_fetal_weight_g=efw,
+                biparietal_diameter_mm=bpd,
+                femur_length_mm=fl,
+                abdominal_circumference_mm=ac,
+                head_circumference_mm=hc,
+                amniotic_fluid_index=afi,
+                notes=notes or None,
+            )
+            st.session_state["_growth_save_result"] = "success"
+        except Exception as e:
+            st.session_state["_growth_save_result"] = "error:{}".format(str(e)[:200])
+
+    # Show button — disabled if too soon
+    _too_soon = (_now - _last_save) < _cooldown
+    st.button(
+        "💾 حفظ القياس" + (" (انتظر {:.0f}ث)".format(_cooldown - (_now - _last_save)) if _too_soon else ""),
+        type="primary",
+        use_container_width=True,
+        key="growth_save_btn_v2",
+        on_click=_do_save_growth,
+        disabled=_too_soon,
+    )
+
+    # Show result
+    if st.session_state.get("_growth_save_result"):
+        result = st.session_state["_growth_save_result"]
+        if result == "success":
+            st.success("✅ تم حفظ القياس بنجاح!")
+        elif result.startswith("error:"):
+            st.error("❌ " + result[6:])
+
+
+def _render_table_tab(clinic, user):
+    """Table of measurements"""
+
+    patients = _fetch_patients(clinic["id"])
+    if not patients:
+        return
+
+    pmap = {p["id"]: p.get("full_name", "—") for p in patients}
+
+    selected_id = st.selectbox(
+        "👩 الحامل",
+        options=list(pmap.keys()),
+        format_func=lambda x: pmap[x],
+        key="growth_table_patient"
+    )
+
+    if not selected_id:
+        return
+
+    measurements = list_measurements(clinic["id"], selected_id, limit=100)
+
+    if not measurements:
+        empty_state("📋", "لا توجد قياسات", "")
+        return
+
+    st.caption("📊 {} قياس".format(len(measurements)))
+
+    # Table
     rows = []
     for m in measurements:
+        analysis = analyze_measurement(m) or {}
+        diag = analysis.get("diagnosis") or {}
+
+        # Convert all values to strings for Arrow compatibility
         rows.append({
-            "التاريخ": (m.get("measured_at") or "—")[:10],
-            "الأسبوع": m.get("gestational_week"),
-            "ارتفاع (سم)": m.get("fundal_height_cm") or "—",
-            "وزن الجنين (غ)": m.get("estimated_fetal_weight_g") or "—",
-            "BPD (مم)": m.get("biparietal_diameter_mm") or "—",
-            "FL (مم)": m.get("femur_length_mm") or "—",
-            "AFI (سم)": m.get("amniotic_fluid_index") or "—",
+            "الأسبوع": str(m.get("gestational_week") or ""),
+            "التاريخ": str(m.get("measured_at", ""))[:10],
+            "FH (سم)": str(m.get("fundal_height_cm") or ""),
+            "BPD (مم)": str(m.get("biparietal_diameter_mm") or ""),
+            "HC (مم)": str(m.get("head_circumference_mm") or ""),
+            "AC (مم)": str(m.get("abdominal_circumference_mm") or ""),
+            "FL (مم)": str(m.get("femur_length_mm") or ""),
+            "EFW (غ)": str(m.get("estimated_fetal_weight_g") or ""),
+            "التشخيص": str(diag.get("label", ""))[:25],
         })
+
     df = pd.DataFrame(rows)
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-    # CSV
-    csv = df.to_csv(index=False).encode("utf-8-sig")
-    st.download_button("📥 تحميل CSV", csv,
-        "growth_{}.csv".format(p["full_name"].replace(" ", "_")), "text/csv")
+    # Delete section
+    st.divider()
+    with st.expander("🗑️ حذف قياس"):
+        idx = st.selectbox(
+            "اختر القياس",
+            options=range(len(measurements)),
+            format_func=lambda i: "أسبوع {} — {}".format(
+                measurements[i].get("gestational_week"),
+                str(measurements[i].get("measured_at", ""))[:10]),
+            key="growth_del_select"
+        )
+        if st.button("🗑️ حذف", key="growth_del_btn"):
+            delete_measurement(clinic["id"], measurements[idx]["id"])
+            st.success("🗑️ تم الحذف")
+            st.rerun()
+
+
+# ============================================
+# MAIN RENDER
+# ============================================
+
+def render(clinic, user):
+    """Main render — with global patient selector"""
+    page_header_v2(
+        title="منحنيات نمو الجنين",
+        subtitle="متابعة نمو الجنين حسب معايير WHO",
+        icon="📊",
+    )
+
+    # === GLOBAL PATIENT SELECTOR ===
+    patients = _fetch_patients(clinic["id"])
+
+    if not patients:
+        empty_state("👩", "لا يوجد حوامل", "سجل حاملاً أولاً من قسم الحوامل")
+        return
+
+    pmap = {
+        p["id"]: "{} — {}".format(p.get("full_name", "—"), p.get("phone", ""))
+        for p in patients
+    }
+
+    # Read previously selected patient (or first one)
+    saved_id = st.session_state.get("_growth_current_patient")
+    if saved_id not in pmap:
+        saved_id = list(pmap.keys())[0] if pmap else None
+
+    # Patient selector
+    c1, c2 = st.columns([3, 1])
+    with c1:
+        selected_id = st.selectbox(
+            "👩 اختر الحامل",
+            options=list(pmap.keys()),
+            format_func=lambda x: pmap[x],
+            index=list(pmap.keys()).index(saved_id) if saved_id in pmap else 0,
+            key="growth_global_patient_select",
+        )
+
+    with c2:
+        # Quick count
+        try:
+            measurements = list_measurements(clinic["id"], selected_id, limit=1)
+            count_resp = __import__("core.db", fromlist=["db"]).db().table(
+                "growth_measurements"
+            ).select("id", count="exact").eq(
+                "clinic_id", clinic["id"]
+            ).eq("patient_id", selected_id).execute()
+            st.metric("📊 القياسات", count_resp.count or 0)
+        except Exception:
+            st.metric("📊 القياسات", "—")
+
+    # Save for other tabs
+    st.session_state["_growth_current_patient"] = selected_id
+
+    # Selected patient card
+    patient = next((p for p in patients if p["id"] == selected_id), {})
+    if patient:
+        st.markdown("""
+        <div style="background:linear-gradient(135deg,#F0FDF4 0%,#DCFCE7 100%);
+                    border-radius:12px;padding:0.9rem 1.2rem;
+                    border:1px solid #BBF7D0;margin-bottom:1rem;">
+            <div style="font-weight:700;color:#0F172A;font-size:1rem;">
+                👩 {}
+            </div>
+            <div style="color:#166534;font-size:0.82rem;margin-top:0.2rem;">
+                📞 {} &nbsp;|&nbsp; 📅 EDD: {}
+            </div>
+        </div>
+        """.format(
+            patient.get("full_name", "—"),
+            patient.get("phone", "—"),
+            str(patient.get("edd", "—"))[:10],
+        ), unsafe_allow_html=True)
+
+    st.divider()
+
+    # Tabs
+    tab1, tab2, tab3 = st.tabs([
+        "📊 المنحنيات",
+        "➕ قياس جديد",
+        "📋 الجدول",
+    ])
+
+    with tab1:
+        _render_charts_for(clinic, user, selected_id)
+    with tab2:
+        _render_add_for(clinic, user, selected_id)
+    with tab3:
+        _render_table_for(clinic, user, selected_id)
+
+
+# ============================================
+# TAB RENDERERS (using passed patient_id)
+# ============================================
+
+def _render_charts_for(clinic, user, patient_id):
+    """Charts tab — for selected patient"""
+    if not patient_id:
+        empty_state("👩", "اختر حاملاً", "")
+        return
+
+    patient_data = get_patient_chart_data(clinic["id"], patient_id)
+
+    if not patient_data.get("weeks"):
+        empty_state(
+            "📊",
+            "لا توجد قياسات",
+            "أضف قياسات من تبويب '➕ قياس جديد' لعرض المنحنيات"
+        )
+        return
+
+    summary = get_patient_summary(clinic["id"], patient_id)
+
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        kpi_card_v2("📊", summary["total"], "عدد القياسات")
+    with c2:
+        kpi_card_v2("📅", _gest_age_display(summary.get("first_week")), "أول قياس")
+    with c3:
+        kpi_card_v2("📅", _gest_age_display(summary.get("last_week")), "آخر قياس")
+    with c4:
+        latest_analysis = summary.get("latest_analysis") or {}
+        diag = latest_analysis.get("diagnosis") or {}
+        status = diag.get("status", "unknown")
+        status_icon = {"normal": "✅", "iugr": "🚨", "macrosomia": "🟡"}.get(status, "ℹ️")
+        kpi_card_v2(status_icon, diag.get("label", "—")[:20], "التشخيص")
+
+    st.divider()
+    section_header_v2("📊", "المنحنيات مع مرجع WHO")
+
+    fig = _build_growth_chart("efw", patient_data,
+        "⚖️ الوزن المتوقع للجنين (EFW)", "غرام", "#16A34A")
+    if fig:
+        st.plotly_chart(fig, use_container_width=True)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        fig = _build_growth_chart("bpd", patient_data, "📏 قطر الرأس (BPD)", "مم", "#0EA5E9")
+        if fig: st.plotly_chart(fig, use_container_width=True)
+    with c2:
+        fig = _build_growth_chart("hc", patient_data, "🧠 محيط الرأس (HC)", "مم", "#8B5CF6")
+        if fig: st.plotly_chart(fig, use_container_width=True)
+
+    c3, c4 = st.columns(2)
+    with c3:
+        fig = _build_growth_chart("ac", patient_data, "💚 محيط البطن (AC)", "مم", "#F59E0B")
+        if fig: st.plotly_chart(fig, use_container_width=True)
+    with c4:
+        fig = _build_growth_chart("fl", patient_data, "🦴 طول عظم الفخذ (FL)", "مم", "#EC4899")
+        if fig: st.plotly_chart(fig, use_container_width=True)
+
+    # Diagnosis
+    latest_analysis = summary.get("latest_analysis") or {}
+    diag = latest_analysis.get("diagnosis")
+    if diag:
+        st.divider()
+        section_header_v2("⚕️", "التشخيص الطبي")
+        color = diag.get("color", "#10B981")
+        st.markdown("""
+        <div style="background:white;border:1px solid {color};border-radius:12px;
+                    padding:1.25rem 1.5rem;border-right:5px solid {color};">
+            <div style="font-size:1.2rem;font-weight:700;color:{color};">
+                {label}
+            </div>
+            <div style="color:#334155;margin-top:0.5rem;font-size:0.95rem;">
+                {details}
+            </div>
+        </div>
+        """.format(color=color, label=diag.get("label", ""), details=diag.get("details", "")),
+        unsafe_allow_html=True)
+
+        recs = diag.get("recommendations", [])
+        if recs:
+            st.markdown("##### 💡 التوصيات")
+            for r in recs:
+                st.markdown("  - {}".format(r))
+
+
+def _render_add_for(clinic, user, patient_id):
+    """Add tab — for selected patient"""
+    if not patient_id:
+        empty_state("👩", "اختر حاملاً", "")
+        return
+
+    st.markdown("#### ➕ إضافة قياس جديد")
+    st.caption("👩 الحامل: **{}**".format(
+        st.session_state.get("_growth_current_patient", "")))
+
+    st.markdown("##### 📅 معلومات أساسية")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        measured_at = st.date_input("تاريخ القياس", value=date.today(), key="growth_add_date_v2")
+    with c2:
+        gestational_week = st.number_input("أسابيع الحمل *", min_value=8, max_value=42,
+            value=20, step=1, key="growth_add_week_v2")
+
+    st.markdown("##### 📏 القياسات (املأ ما توفر)")
+
+    c3, c4 = st.columns(2)
+    with c3:
+        fundal_height = st.number_input("ارتفاع الرحم (سم)", min_value=0.0, max_value=60.0,
+            value=0.0, step=0.5, key="growth_add_fh_v2")
+        bpd = st.number_input("قطر الرأس BPD (مم)", min_value=0.0, max_value=150.0,
+            value=0.0, step=1.0, key="growth_add_bpd_v2")
+        hc = st.number_input("محيط الرأس HC (مم)", min_value=0.0, max_value=450.0,
+            value=0.0, step=1.0, key="growth_add_hc_v2")
+
+    with c4:
+        ac = st.number_input("محيط البطن AC (مم)", min_value=0.0, max_value=500.0,
+            value=0.0, step=1.0, key="growth_add_ac_v2")
+        fl = st.number_input("طول عظم الفخذ FL (مم)", min_value=0.0, max_value=120.0,
+            value=0.0, step=1.0, key="growth_add_fl_v2")
+        efw = st.number_input("الوزن المتوقع EFW (غرام)", min_value=0, max_value=6000,
+            value=0, step=50, key="growth_add_efw_v2")
+
+    afi = st.number_input("مؤشر السائل الأمنيوسي (AFI)", min_value=0.0, max_value=40.0,
+        value=0.0, step=0.5, key="growth_add_afi_v2")
+
+    notes = st.text_area("ملاحظات", placeholder="اختياري...", height=68, key="growth_add_notes_v2")
+
+    st.write("")
+
+    # Debounced save
+    import time as _time
+    _last = st.session_state.get("_growth_last_save_v2", 0)
+    _now = _time.time()
+    _cooldown = 3.0
+    _too_soon = (_now - _last) < _cooldown
+
+    def _do_save():
+        st.session_state["_growth_last_save_v2"] = _time.time()
+        try:
+            create_measurement(
+                clinic_id=clinic["id"],
+                patient_id=patient_id,
+                measured_at=measured_at,
+                gestational_week=int(gestational_week),
+                fundal_height_cm=fundal_height,
+                estimated_fetal_weight_g=efw,
+                biparietal_diameter_mm=bpd,
+                femur_length_mm=fl,
+                abdominal_circumference_mm=ac,
+                head_circumference_mm=hc,
+                amniotic_fluid_index=afi,
+                notes=notes or None,
+            )
+            st.session_state["_growth_save_result_v2"] = "success"
+        except Exception as e:
+            st.session_state["_growth_save_result_v2"] = "error:" + str(e)[:200]
+
+    st.button(
+        "💾 حفظ القياس" + (" (انتظر {:.0f}ث)".format(_cooldown - (_now - _last)) if _too_soon else ""),
+        type="primary", use_container_width=True,
+        key="growth_save_btn_v2", on_click=_do_save,
+        disabled=_too_soon,
+    )
+
+    if st.session_state.get("_growth_save_result_v2"):
+        r = st.session_state["_growth_save_result_v2"]
+        if r == "success":
+            st.success("✅ تم حفظ القياس بنجاح!")
+        elif r.startswith("error:"):
+            st.error("❌ " + r[6:])
+
+
+def _render_table_for(clinic, user, patient_id):
+    """Table tab — for selected patient"""
+    if not patient_id:
+        return
+
+    measurements = list_measurements(clinic["id"], patient_id, limit=100)
+
+    if not measurements:
+        empty_state("📋", "لا توجد قياسات", "أضف قياساً من تبويب '➕ قياس جديد'")
+        return
+
+    st.caption("📊 {} قياس".format(len(measurements)))
+
+    rows = []
+    for m in measurements:
+        analysis = analyze_measurement(m) or {}
+        diag = analysis.get("diagnosis") or {}
+        rows.append({
+            "الأسبوع": str(m.get("gestational_week") or ""),
+            "التاريخ": str(m.get("measured_at", ""))[:10],
+            "FH": str(m.get("fundal_height_cm") or ""),
+            "BPD": str(m.get("biparietal_diameter_mm") or ""),
+            "HC": str(m.get("head_circumference_mm") or ""),
+            "AC": str(m.get("abdominal_circumference_mm") or ""),
+            "FL": str(m.get("femur_length_mm") or ""),
+            "EFW": str(m.get("estimated_fetal_weight_g") or ""),
+            "التشخيص": str(diag.get("label", ""))[:25],
+        })
+
+    df = pd.DataFrame(rows)
+    st.dataframe(df, use_container_width=True, hide_index=True)
 
     # Delete
     st.divider()
-    st.markdown("##### 🗑️ حذف قياس")
-    delete_options = {
-        m["id"]: "{} — أسبوع {} — {}".format(
-            (m.get("measured_at") or "")[:10],
-            m.get("gestational_week"),
-            m.get("fundal_height_cm") or "—"
-        ) for m in measurements
-    }
-    selected = st.selectbox(
-        "اختر القياس",
-        options=list(delete_options.keys()),
-        format_func=lambda x: delete_options[x],
-        key="delete_growth_measurement"
-    )
-    if st.button("🗑️ حذف هذا القياس", key="del_growth_btn"):
-        if st.session_state.get("confirm_growth_del") == selected:
-            delete_measurement(clinic["id"], selected)
-            clear_all()
-            st.session_state["confirm_growth_del"] = None
-            st.success("تم الحذف")
+    with st.expander("🗑️ حذف قياس"):
+        idx = st.selectbox(
+            "اختر القياس",
+            options=range(len(measurements)),
+            format_func=lambda i: "أسبوع {} — {}".format(
+                measurements[i].get("gestational_week"),
+                str(measurements[i].get("measured_at", ""))[:10]),
+            key="growth_del_select_v2"
+        )
+        if st.button("🗑️ حذف", key="growth_del_btn_v2"):
+            delete_measurement(clinic["id"], measurements[idx]["id"])
+            st.success("🗑️ تم الحذف")
             st.rerun()
-        else:
-            st.session_state["confirm_growth_del"] = selected
-            st.warning("اضغط مرة أخرى للتأكيد")
 
 
-# ============================================
-# WIDGET: quick add
-# ============================================
+
 def quick_add_growth(clinic, user, patient_id):
-    """Button helper for patient detail"""
-    if st.button("📈 قياس نمو جديد", key="quick_growth_" + patient_id, use_container_width=True):
-        st.session_state["selected_patient_id"] = patient_id
-        st.info("👉 اذهب لتبويب **📈 نمو الجنين**")
+    """Quick entry from patient view"""
+    st.session_state["nav_section"] = "medical"
+    st.rerun()

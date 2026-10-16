@@ -599,14 +599,24 @@ def render(clinic, user):
         _render_stats_tab(clinic, user)
 
 
-def _render_edit_modal(clinic, user):
-    nb_id = st.session_state.get("nb_edit_id")
-    nb = get_newborn(clinic["id"], nb_id)
+def _render_edit_page(clinic, user, edit_id=None):
+    if not edit_id:
+        edit_id = st.session_state.get("nb_edit_id")
+    nb = get_newborn(clinic["id"], edit_id)
     if not nb:
         st.session_state.pop("nb_edit_id", None)
+        st.error("❌ السجل غير موجود")
+        if st.button("← رجوع"):
+            st.session_state.pop("nb_edit_id", None)
+            st.rerun()
         return
 
-    with st.expander("✏️ تعديل بيانات المولود", expanded=True):
+    if st.button("← رجوع للقائمة", key="nb_edit_back"):
+        st.session_state.pop("nb_edit_id", None)
+        st.rerun()
+
+    st.markdown("### ✏️ تعديل بيانات المولود")
+    with st.container():
         with st.form("edit_newborn"):
             c1, c2 = st.columns(2)
             with c1:
@@ -637,7 +647,7 @@ def _render_edit_modal(clinic, user):
 
             if save:
                 try:
-                    update_newborn(clinic["id"], nb_id,
+                    update_newborn(clinic["id"], edit_id,
                         baby_name=baby_name or None,
                         weight_grams=weight,
                         health_status=health,
