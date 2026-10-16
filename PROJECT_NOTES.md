@@ -267,3 +267,52 @@ Ultrasound (#9), 2FA (#7), Reports (#11), UI 2.0, Print mode
 - #6 Google Calendar
 - #8 i18n
 - #13 Stripe/Paddle
+
+---
+
+## ✅ #18 Newborn Records (2026-10-17)
+
+### DB:
+- جدول `newborns`
+
+### الملفات الجديدة:
+- services/newborns.py (300 سطر)
+- services/newborn_certificate_pdf.py (593 سطر)
+- views/newborns_view.py (700+ سطر)
+
+### الميزات:
+- ✅ تسجيل ولادة كامل
+- ✅ APGAR (1/5/10 دقائق)
+- ✅ قياسات (وزن، طول، محيط رأس)
+- ✅ شهادة ميلاد PDF بالعربية + QR
+- ✅ إحصائيات العيادة
+- ✅ تعديل
+- ✅ حذف
+
+### إصلاحات حرجة:
+- 🐛 **108 سجل وهمي** — on_click callback
+- 🐛 **الرقص** — إزالة animations
+- 🐛 **st.form معطّل** — إزالة الفورم
+- 🐛 **time.sleep** — import fix
+- 🐛 **nb_id** — rename to edit_id
+
+### ملاحظات للتطوير:
+- `page_header_v2` الآن بـ native Streamlit (لا HTML)
+- استخدم `on_click` callback لأي زر يُنشئ سجلاً
+- تجنّب `st.form` مع widgets ديناميكية
+
+---
+
+## 📊 إجمالي الميزات النهائي (2026-10-17)
+
+**31+ ميزة:**
+Multi-tenancy, Auth, Patients, Visits, AI, PDF, PWA, WhatsApp, QR,
+Prescriptions, Vaccinations, Growth, Analytics, Appointments, Messaging,
+Files, Alerts, Users,
+Excel (#10), Certificate (#5), Lab Tests (#4), Ultrasound (#9), 2FA (#7),
+Reports (#11), Vaccination Schedule (#12), Dashboard Alerts (#13),
+Comprehensive Report (#14), Analytics PDF (#15), Global Search (#16),
+Audit Log (#17), Newborn Records (#18),
+UI 2.0, Print mode, Auth redesign, Session persistence
+
+**حالة المشروع:** ✅ جاهز للعملاء
