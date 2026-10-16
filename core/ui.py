@@ -1624,6 +1624,7 @@ def render_sidebar(clinic, user, active="dashboard"):
             ("lab_tests", "🔬 التحاليل المخبرية"),
             ("ultrasound", "📸 صور السونار"),
             ("vaccination_schedule", "💉 جدول التطعيمات"),
+            ("newborns", "👶 سجل المواليد"),
             ("reports", "📊 التقارير"),
             ("two_factor", "🛡️ الحماية الثنائية"),
             ("audit_log", "📝 سجل التغييرات"),

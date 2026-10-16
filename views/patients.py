@@ -285,6 +285,13 @@ def _render_detail(clinic, user):
             st.session_state["patient_view"] = "list"
             st.rerun()
 
+    # Quick action: record delivery
+    if st.button("👶 تسجيل ولادة", use_container_width=True, key="det_delivery_btn"):
+        st.session_state["_prefill_mother_id"] = pid
+        st.session_state["nav_section"] = "newborns"
+        st.session_state["nb_active_tab"] = "add"
+        st.rerun()
+
     # Download button if PDF is ready
     if st.session_state.get("_full_report_pdf"):
         _pdf = st.session_state["_full_report_pdf"]

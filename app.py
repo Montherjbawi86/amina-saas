@@ -295,6 +295,11 @@ elif _nav == "vaccination_schedule":
     import views.vaccination_schedule_view as view_vax
     view_vax.render(clinic, user)
 
+# ============ NEWBORNS ============
+elif _nav == "newborns":
+    import views.newborns_view as view_nb
+    view_nb.render(clinic, user)
+
 # ============ REPORTS ============
 elif _nav == "reports":
     import views.reports_view as view_reports
