@@ -67,7 +67,7 @@ p, li { color: #334155; line-height: 1.6; }
     color: #334155 !important;
     padding: 0.5rem 0.9rem !important;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
-    transition: all 0.15s ease !important;
+    /* transition removed */
 }
 .stButton > button:hover {
     border-color: #16A34A !important;
@@ -96,7 +96,7 @@ p, li { color: #334155; line-height: 1.6; }
     border: 1px solid #E2E8F0 !important;
     background: white !important;
     color: #334155 !important;
-    transition: all 0.15s ease !important;
+    /* transition removed */
 }
 .stLinkButton > a:hover {
     border-color: #16A34A !important;
@@ -114,7 +114,7 @@ p, li { color: #334155; line-height: 1.6; }
     background: #FFFFFF !important;
     font-size: 0.9rem !important;
     padding: 0.55rem 0.75rem !important;
-    transition: all 0.15s ease !important;
+    /* transition removed */
     color: #0F172A !important;
 }
 .stTextInput > div > div > input:focus,
@@ -194,7 +194,7 @@ p, li { color: #334155; line-height: 1.6; }
     gap: 0.85rem;
     border: 1px solid #E2E8F0;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-    transition: all 0.15s ease;
+    /* transition removed */
     height: 100%;
 }
 .kpi-card:hover {
@@ -237,7 +237,7 @@ p, li { color: #334155; line-height: 1.6; }
     gap: 1rem;
     border: 1px solid #E2E8F0;
     border-right: 3px solid #16A34A;
-    transition: all 0.15s ease;
+    /* transition removed */
 }
 .patient-card:hover {
     border-color: #16A34A;
@@ -501,7 +501,7 @@ section[data-testid="stSidebar"] h3 {
         font-size: 0.95rem !important;
         background: transparent !important;
         border: none !important;
-        transition: all 0.15s ease !important;
+        /* transition removed */
     }
     .stTabs [data-baseweb="tab"]:hover {
         color: #16A34A !important;
@@ -763,7 +763,7 @@ section[data-testid="stSidebar"] h3 {
     .hero {
         background: linear-gradient(135deg, #16A34A 0%, #22C55E 25%, #4ADE80 50%, #22C55E 75%, #16A34A 100%) !important;
         background-size: 200% 200% !important;
-        animation: gradientShift 8s ease infinite, fadeInUp 0.8s ease-out !important;
+        /* animation removed */
         position: relative;
         overflow: hidden;
     }
@@ -775,7 +775,7 @@ section[data-testid="stSidebar"] h3 {
         width: 200%;
         height: 200%;
         background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
-        animation: rotate 30s linear infinite;
+        /* animation removed */
         pointer-events: none;
     }
     .hero::after {
@@ -787,11 +787,11 @@ section[data-testid="stSidebar"] h3 {
         height: 200px;
         background: rgba(255,255,255,0.08);
         border-radius: 50%;
-        animation: float 6s ease-in-out infinite;
+        /* animation removed */
         pointer-events: none;
     }
     .hero > * {
-        animation: fadeInUp 1s ease-out;
+        /* animation removed */
         animation-fill-mode: both;
     }
     .hero > *:nth-child(1) { animation-delay: 0.1s; }
@@ -805,8 +805,8 @@ section[data-testid="stSidebar"] h3 {
         padding: 1.75rem 1.5rem;
         border: 1px solid #E2E8F0;
         box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        animation: fadeInUp 0.6s ease-out;
+        /* transition removed */
+        /* animation removed */
         animation-fill-mode: both;
         position: relative;
         overflow: hidden;
@@ -871,8 +871,8 @@ section[data-testid="stSidebar"] h3 {
         background: white;
         border-radius: 16px;
         border: 1px solid #E2E8F0;
-        transition: all 0.3s ease;
-        animation: scaleIn 0.5s ease-out;
+        /* transition removed */
+        /* animation removed */
         animation-fill-mode: both;
     }
     .stat-box:hover {
@@ -908,7 +908,7 @@ section[data-testid="stSidebar"] h3 {
         padding: 2.5rem 2rem;
         text-align: center;
         border: 2px dashed #86EFAC;
-        animation: fadeInUp 0.8s ease-out;
+        /* animation removed */
         margin: 2rem 0;
     }
     .cta-section h2 {
@@ -928,7 +928,7 @@ section[data-testid="stSidebar"] h3 {
         border-radius: 50%;
         background: #22C55E;
         margin-right: 0.4rem;
-        animation: pulse 1.5s ease-in-out infinite;
+        /* animation removed */
     }
 
     /* Floating badge */
@@ -942,27 +942,27 @@ section[data-testid="stSidebar"] h3 {
         border-radius: 999px;
         font-size: 0.75rem;
         font-weight: 700;
-        animation: float 3s ease-in-out infinite;
+        /* animation removed */
         box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
     }
 
     /* Heartbeat icon */
     .heartbeat {
-        animation: heartbeat 1.5s ease-in-out infinite;
+        /* animation removed */
         display: inline-block;
     }
 
     /* Bounce arrow */
     .bounce-arrow {
         display: inline-block;
-        animation: bounce 2s infinite;
+        /* animation removed */
     }
 
     /* Fade in class utilities */
-    .fade-in { animation: fadeIn 0.6s ease-out; }
-    .fade-up { animation: fadeInUp 0.6s ease-out; }
-    .fade-left { animation: fadeInLeft 0.6s ease-out; }
-    .fade-right { animation: fadeInRight 0.6s ease-out; }
+    .fade-in { /* animation removed */ }
+    .fade-up { /* animation removed */ }
+    .fade-left { /* animation removed */ }
+    .fade-right { /* animation removed */ }
 
     /* Delay utilities */
     .delay-1 { animation-delay: 0.1s; animation-fill-mode: both; }
@@ -977,7 +977,7 @@ section[data-testid="stSidebar"] h3 {
         border-radius: 20px;
         padding: 2.5rem 2rem;
         border: 1px solid #E2E8F0;
-        animation: fadeInUp 0.8s ease-out;
+        /* animation removed */
         margin: 2rem 0;
     }
 
@@ -997,7 +997,7 @@ section[data-testid="stSidebar"] h3 {
     .about-image {
         text-align: center;
         font-size: 8rem;
-        animation: float 4s ease-in-out infinite;
+        /* animation removed */
     }
 
 
@@ -1007,19 +1007,19 @@ section[data-testid="stSidebar"] h3 {
     /* Simplify hero gradient (no continuous animation) */
     .hero {
         background: linear-gradient(135deg, #16A34A 0%, #22C55E 100%) !important;
-        animation: fadeInUp 0.6s ease-out !important;
+        /* animation removed */
         background-size: auto !important;
     }
     .hero::before {
-        animation: none !important;
+        /* animation removed */
     }
     .hero::after {
-        animation: none !important;
+        /* animation removed */
     }
 
     /* Kill the float animations on stat boxes (keep hover) */
     .stat-box {
-        animation: fadeInUp 0.4s ease-out !important;
+        /* animation removed */
     }
     .stat-box:hover {
         transform: translateY(-2px) !important;
@@ -1027,12 +1027,12 @@ section[data-testid="stSidebar"] h3 {
 
     /* Simpler feature card animation */
     .feature-card {
-        animation: fadeInUp 0.4s ease-out !important;
+        /* animation removed */
     }
 
     /* Kill float on floating badge */
     .floating-badge {
-        animation: none !important;
+        /* animation removed */
     }
 
     /* Kill rotation animation */
@@ -1105,6 +1105,29 @@ section[data-testid="stSidebar"] h3 {
 
 
     /* ============================================ */
+    /* ============ PERFORMANCE FIX ============ */
+    /* ============================================ */
+    /* Disable all animations to prevent "dancing" on rerun */
+    *, *::before, *::after {
+        animation-duration: 0s !important;
+        animation-delay: 0s !important;
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+    }
+
+    .page-header-v2,
+    .kpi-card-v2,
+    .hero,
+    .feature-card,
+    .stat-box,
+    .patient-card,
+    .kpi-card,
+    .glass-card {
+        /* animation removed */
+        transition: none !important;
+    }
+
+    /* ============================================ */
     /* ============ ENHANCED UI 2.0 ============ */
     /* ============================================ */
 
@@ -1117,7 +1140,7 @@ section[data-testid="stSidebar"] h3 {
         border-radius: 16px;
         padding: 1.25rem 1.5rem;
         box-shadow: 0 4px 24px rgba(15,23,42,0.04);
-        transition: all 0.25s ease;
+        /* transition removed */
     }
     .glass-card:hover {
         box-shadow: 0 8px 32px rgba(22,163,74,0.08);
@@ -1135,7 +1158,6 @@ section[data-testid="stSidebar"] h3 {
         gap: 1rem;
         border: 1px solid #E2E8F0;
         box-shadow: 0 1px 3px rgba(15,23,42,0.04);
-        transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
         position: relative;
         overflow: hidden;
     }
@@ -1200,7 +1222,7 @@ section[data-testid="stSidebar"] h3 {
         border: 1px solid #E2E8F0;
         margin-bottom: 1.5rem;
         box-shadow: 0 1px 3px rgba(15,23,42,0.03);
-        animation: fadeDown 0.5s ease-out;
+        /* animation removed for performance */
     }
     .page-header-v2 .ph-icon {
         width: 56px;
@@ -1338,7 +1360,7 @@ section[data-testid="stSidebar"] h3 {
         border: 1px solid #E2E8F0;
         border-radius: 14px;
         padding: 1rem 1.15rem;
-        transition: all 0.2s ease;
+        /* transition removed */
     }
     [data-testid="stMetric"]:hover {
         border-color: #86EFAC;
@@ -1379,7 +1401,7 @@ section[data-testid="stSidebar"] h3 {
 
     /* === STAGGERED ANIMATION === */
     .stagger > * {
-        animation: fadeUp 0.4s ease-out;
+        /* animation removed */
         animation-fill-mode: both;
     }
     .stagger > *:nth-child(1) { animation-delay: 0.05s; }
@@ -1395,7 +1417,7 @@ section[data-testid="stSidebar"] h3 {
     .stFormSubmitButton > button[kind="primary"] {
         background: linear-gradient(135deg, #16A34A 0%, #22C55E 100%) !important;
         box-shadow: 0 4px 16px rgba(22,163,74,0.3) !important;
-        transition: all 0.2s ease !important;
+        /* transition removed */
     }
     .stButton > button[kind="primary"]:hover,
     .stDownloadButton > button[kind="primary"]:hover,
@@ -1416,7 +1438,7 @@ section[data-testid="stSidebar"] h3 {
         border-radius: 8px !important;
         padding: 10px 18px !important;
         font-weight: 600 !important;
-        transition: all 0.15s ease !important;
+        /* transition removed */
     }
     .stTabs [aria-selected="true"] {
         background: white !important;
@@ -1809,26 +1831,26 @@ def footer_landing():
 # ============================================
 
 def page_header_v2(title, subtitle=None, icon="📋", badge=None):
-    """Modern page header with gradient icon"""
-    badge_html = ""
-    if badge:
-        badge_html = '<span style="background:#F0FDF4;color:#15803D;padding:0.2rem 0.7rem;border-radius:999px;font-size:0.75rem;font-weight:700;border:1px solid #BBF7D0;margin-left:auto;">{}</span>'.format(badge)
+    """Simple page header — uses native Streamlit (no animation, no dance)"""
+    # Use columns for layout
+    col1, col2 = st.columns([5, 1])
 
-    sub_html = ""
-    if subtitle:
-        sub_html = '<p class="ph-sub">{}</p>'.format(subtitle)
+    with col1:
+        st.markdown("## {} {}".format(icon, title))
+        if subtitle:
+            st.caption(subtitle)
 
-    st.markdown("""
-    <div class="page-header-v2">
-        <div class="ph-icon">{icon}</div>
-        <div style="flex:1;">
-            <h1 class="ph-title">{title}</h1>
-            {sub}
-        </div>
-        {badge}
-    </div>
-    """.format(icon=icon, title=title, sub=sub_html, badge=badge_html),
-    unsafe_allow_html=True)
+    with col2:
+        if badge:
+            st.markdown("""
+            <div style="text-align:right;padding-top:0.5rem;">
+                <span style="background:#F0FDF4;color:#15803D;padding:0.25rem 0.7rem;
+                            border-radius:999px;font-size:0.75rem;font-weight:700;
+                            border:1px solid #BBF7D0;">{}</span>
+            </div>
+            """.format(badge), unsafe_allow_html=True)
+
+    st.write("")  # small spacer
 
 
 def kpi_card_v2(icon, value, label, color=None):
