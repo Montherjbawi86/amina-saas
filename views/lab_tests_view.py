@@ -135,6 +135,7 @@ def _render_test_card(test, patient_name=""):
 # TABS
 # ============================================
 
+@st.fragment
 def _render_add_tab(clinic, user):
     """Add a new lab test"""
     st.markdown("#### ➕ إضافة تحليل جديد")
@@ -243,12 +244,10 @@ def _render_add_tab(clinic, user):
     spacer(1)
 
     # Save button
-    if st.button("💾 حفظ التحليل", type="primary", use_container_width=True,
-                 key="lab_save_btn"):
+    def _do_save_lab():
         if not result_value:
-            st.error("⚠️ أدخل قيمة واحدة على الأقل")
+            st.session_state["_lab_save_msg"] = "err:أدخل قيمة واحدة على الأقل"
             return
-
         try:
             create_lab_test(
                 clinic_id=clinic["id"],
@@ -260,12 +259,26 @@ def _render_add_tab(clinic, user):
                 lab_name=lab_name or None,
                 notes=notes or None,
             )
-            st.success("✅ تم حفظ التحليل بنجاح")
-            st.balloons()
-            st.rerun()
+            st.session_state["_lab_save_msg"] = "ok"
+            st.session_state["_lab_save_patient"] = selected_id
         except Exception as e:
-            st.error("❌ فشل الحفظ")
-            st.exception(e)
+            st.session_state["_lab_save_msg"] = "err:" + str(e)[:200]
+
+    st.button(
+        "💾 حفظ التحليل",
+        type="primary",
+        use_container_width=True,
+        key="lab_save_btn_v2",
+        on_click=_do_save_lab,
+    )
+
+    if st.session_state.get("_lab_save_msg") == "ok":
+        st.success("✅ تم حفظ التحليل بنجاح")
+        st.session_state.pop("_lab_save_msg", None)
+        st.session_state.pop("_lab_save_patient", None)
+    elif st.session_state.get("_lab_save_msg", "").startswith("err:"):
+        st.error("❌ " + st.session_state["_lab_save_msg"][4:])
+        st.session_state.pop("_lab_save_msg", None)
 
 
 def _render_list_tab(clinic, user):
@@ -273,7 +286,9 @@ def _render_list_tab(clinic, user):
     st.markdown("#### 📋 قائمة التحاليل")
 
     patients = _fetch_patients(clinic["id"])
-    pmap = {"": "الكل"} | {p["id"]: p.get("full_name", "") for p in patients}
+    pmap = {"": "الكل"}
+    for p in patients:
+        pmap[p["id"]] = p.get("full_name", "")
 
     # Filters
     c1, c2, c3, c4 = st.columns([2, 2, 2, 1])
@@ -345,7 +360,6 @@ def _render_list_tab(clinic, user):
             if st.button("🗑️", key="lab_del_{}".format(t["id"]), help="حذف"):
                 if delete_lab_test(clinic["id"], t["id"]):
                     st.success("🗑️ تم الحذف")
-                    st.rerun()
         with c2:
             st.write("")  # spacing
 

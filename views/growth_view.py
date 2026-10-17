@@ -456,7 +456,6 @@ def _render_table_tab(clinic, user):
         if st.button("🗑️ حذف", key="growth_del_btn"):
             delete_measurement(clinic["id"], measurements[idx]["id"])
             st.success("🗑️ تم الحذف")
-            st.rerun()
 
 
 # ============================================
@@ -773,7 +772,6 @@ def _render_table_for(clinic, user, patient_id):
         if st.button("🗑️ حذف", key="growth_del_btn_v2"):
             delete_measurement(clinic["id"], measurements[idx]["id"])
             st.success("🗑️ تم الحذف")
-            st.rerun()
 
 
 

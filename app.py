@@ -178,7 +178,6 @@ with _fab_col2:
         st.session_state["patient_view"] = "new"
         st.session_state["nav_section"] = "patients"
         st.session_state["selected_patient_id"] = None
-        st.rerun()
 
 st.write("")
 
@@ -224,7 +223,6 @@ elif _nav == "medical":
                     )
                     if st.button("✓ اختيار", key="medical_select_btn", type="primary"):
                         st.session_state["selected_patient_id"] = _selected
-                        st.rerun()
         except Exception:
             pass
     else:
@@ -239,7 +237,6 @@ elif _nav == "medical":
                 with c2:
                     if st.button("🔄 تغيير الحامل", key="change_patient_medical"):
                         st.session_state["selected_patient_id"] = None
-                        st.rerun()
         except Exception:
             pass
 

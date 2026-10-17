@@ -198,7 +198,6 @@ def _render_manage_flow(user):
             try:
                 disable_2fa(user["id"])
                 st.success("✅ تم إلغاء التفعيل")
-                st.rerun()
             except Exception as e:
                 st.error("❌ {}".format(str(e)[:200]))
 

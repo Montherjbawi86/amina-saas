@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-GDM Screening View
+GDM Screening View — with st.fragment (no dancing)
 واجهة سكري الحمل
 """
 from datetime import date, datetime
@@ -46,7 +46,7 @@ def _get_week(patient):
 
 
 def render(clinic, user):
-    """Main render"""
+    """Main render — header + selector OUTSIDE fragment (stable)"""
     page_header_v2(
         title="سكري الحمل",
         subtitle="Gestational Diabetes (GDM) — تشخيص ومتابعة",
@@ -77,10 +77,18 @@ def render(clinic, user):
     if not patient:
         return
 
+    st.divider()
+
+    # ==== Fragment: tabs + save buttons (re-renders only this part) ====
+    _render_gdm_content(clinic, user, patient)
+
+
+@st.fragment
+def _render_gdm_content(clinic, user, patient):
+    """Fragment: only this re-renders on save — no page jump"""
+    selected_id = patient["id"]
     week = _get_week(patient)
     auto_data = get_ogtt_data(clinic["id"], selected_id)
-
-    st.divider()
 
     # Tabs
     tab1, tab2, tab3 = st.tabs([
@@ -139,12 +147,10 @@ def _render_ogtt_tab(clinic, user, patient, week, auto_data):
             help="الحد الطبيعي: < 153"
         )
 
-    # Evaluate
     result = evaluate_ogtt(fasting, h1, h2)
 
     st.divider()
 
-    # Result banner
     if result["urgent"]:
         st.markdown("""
         <div style="background:#DC2626;color:white;padding:1rem 1.25rem;
@@ -175,7 +181,6 @@ def _render_ogtt_tab(clinic, user, patient, week, auto_data):
         abnormal=result["abnormal_count"],
     ), unsafe_allow_html=True)
 
-    # Criteria met
     if result["criteria_met"]:
         st.markdown("##### 🔍 القيم غير الطبيعية")
         for c in result["criteria_met"]:
@@ -187,16 +192,15 @@ def _render_ogtt_tab(clinic, user, patient, week, auto_data):
             </div>
             """.format(c=c), unsafe_allow_html=True)
 
-    # Recommendations
     st.divider()
     section_header_v2("💡", "التوصيات")
     for r in result["recommendation"]:
         st.markdown("  - {}".format(r))
 
-    # Save button
     st.divider()
-    if st.button("💾 حفظ النتائج في قاعدة البيانات", type="primary",
-                 use_container_width=True, key="gdm_save_btn"):
+
+    # === Save button with on_click (no double-save) ===
+    def _save_ogtt_safe():
         try:
             db().table("lab_tests").insert({
                 "clinic_id": clinic["id"],
@@ -214,9 +218,24 @@ def _render_ogtt_tab(clinic, user, patient, week, auto_data):
                             ("moderate" if result["abnormal_count"] >= 2 else "normal"),
                 "status": "completed",
             }).execute()
-            st.success("✅ تم حفظ نتائج OGTT")
+            st.session_state["_gdm_ogtt_ok"] = True
         except Exception as e:
-            st.error("❌ {}".format(str(e)[:200]))
+            st.session_state["_gdm_ogtt_err"] = str(e)[:200]
+
+    st.button(
+        "💾 حفظ النتائج",
+        type="primary",
+        use_container_width=True,
+        key="gdm_save_btn_v2",
+        on_click=_save_ogtt_safe,
+    )
+
+    if st.session_state.get("_gdm_ogtt_ok"):
+        st.success("✅ تم حفظ النتائج")
+        st.session_state["_gdm_ogtt_ok"] = False
+    if st.session_state.get("_gdm_ogtt_err"):
+        st.error("❌ " + st.session_state["_gdm_ogtt_err"])
+        st.session_state["_gdm_ogtt_err"] = None
 
 
 def _render_monitoring_tab(clinic, user, patient):
@@ -243,7 +262,7 @@ def _render_monitoring_tab(clinic, user, patient):
         c1, c2 = st.columns(2)
         with c1:
             reading_date = st.date_input("التاريخ", value=date.today(), key="gdm_reading_date")
-            fasting = st.number_input("صيام (mg/dL)", min_value=40, max_value=300,
+            fasting_r = st.number_input("صيام (mg/dL)", min_value=40, max_value=300,
                 value=90, step=1, key="gdm_reading_fasting")
         with c2:
             post_bf = st.number_input("بعد الفطور (mg/dL)", min_value=40, max_value=400,
@@ -254,7 +273,7 @@ def _render_monitoring_tab(clinic, user, patient):
         post_dinner = st.number_input("بعد العشاء (mg/dL)", min_value=40, max_value=400,
             value=130, step=1, key="gdm_reading_dinner")
 
-        if st.button("💾 حفظ القراءة", key="gdm_save_reading"):
+        def _do_save_reading_cb():
             try:
                 db().table("lab_tests").insert({
                     "clinic_id": clinic["id"],
@@ -263,17 +282,29 @@ def _render_monitoring_tab(clinic, user, patient):
                     "test_name": "Glucose Log",
                     "test_date": str(reading_date),
                     "result_value": {
-                        "fasting": fasting,
+                        "fasting": fasting_r,
                         "post_breakfast": post_bf,
                         "post_lunch": post_lunch,
                         "post_dinner": post_dinner,
                     },
                     "status": "completed",
                 }).execute()
-                st.success("✅ تم الحفظ")
-                st.rerun()
+                st.session_state["_reading_msg"] = "ok"
             except Exception as e:
-                st.error("❌ {}".format(str(e)[:200]))
+                st.session_state["_reading_msg"] = "err:" + str(e)[:200]
+
+        st.button(
+            "💾 حفظ القراءة",
+            key="gdm_save_reading_v2",
+            on_click=_do_save_reading_cb,
+        )
+
+        if st.session_state.get("_reading_msg") == "ok":
+            st.success("✅ تم الحفظ")
+            st.session_state.pop("_reading_msg", None)
+        elif st.session_state.get("_reading_msg", "").startswith("err:"):
+            st.error("❌ " + st.session_state["_reading_msg"][4:])
+            st.session_state.pop("_reading_msg", None)
 
     # Fetch readings
     try:
@@ -294,7 +325,6 @@ def _render_monitoring_tab(clinic, user, patient):
         st.info("📭 لا توجد قراءات مسجلة بعد")
         return
 
-    # Evaluate
     parsed = []
     for r in readings:
         rv = r.get("result_value") or {}
@@ -322,7 +352,6 @@ def _render_monitoring_tab(clinic, user, patient):
     with c3:
         kpi_card_v2("⚠️", eval_result["out_of_range_count"], "خارج النطاق")
 
-    # Result banner
     st.markdown("""
     <div style="background:white;border:2px solid {color};border-radius:16px;
                 padding:1.25rem;border-right:8px solid {color};margin:1rem 0;
@@ -338,7 +367,6 @@ def _render_monitoring_tab(clinic, user, patient):
         note='<div style="font-size:0.85rem;color:#64748B;margin-top:0.5rem;">قد يحتاج بدء أنسولين</div>' if eval_result["needs_insulin"] else "",
     ), unsafe_allow_html=True)
 
-    # Out of range details
     if eval_result["out_of_range"]:
         st.markdown("##### ⚠️ القراءات خارج النطاق")
         for o in eval_result["out_of_range"][:10]:

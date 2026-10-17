@@ -31,6 +31,174 @@ RISK_COLORS = {
 def inject_css():
     st.markdown("""
 <style>
+
+    /* ============ ULTIMATE ANTI-DANCE TRICK ============ */
+    /* Prevent scroll reset */
+    html { scroll-behavior: auto !important; }
+
+    /* Hide content flash during rerun */
+    .stApp {
+        transition: opacity 0.05s !important;
+    }
+
+    /* Force stable layout */
+    div[data-testid="stAppViewContainer"] {
+        overflow-anchor: none !important;
+    }
+
+    /* Hide "Running" spinner completely */
+    [data-testid="stStatusWidget"],
+    [data-testid="stSpinner"],
+    [data-testid="stDecoration"] {
+        display: none !important;
+    }
+
+    /* Prevent reflow on markdown */
+    div[data-testid="stMarkdownContainer"] {
+        min-height: 1px !important;
+    }
+
+    /* ============ END ULTIMATE ============ */
+
+    
+
+    /* ============ STYLE-PRESERVE (anti-dance) ============ */
+    /* Prevent layout recalculation on Streamlit rerun */
+    /* Keeps original visual style, just prevents jump */
+
+    /* Contain layout for all HTML-injected components */
+    .kpi-card-v2,
+    .kpi-card,
+    .page-header-v2,
+    .info-card,
+    .glass-card,
+    .risk-banner,
+    .patient-card,
+    .concern-item,
+    .recommendation,
+    .positive-item {
+        contain: layout style !important;
+        will-change: auto !important;
+        transform: translateZ(0) !important;
+        backface-visibility: hidden !important;
+        -webkit-backface-visibility: hidden !important;
+    }
+
+    /* Prevent Streamlit markdown containers from re-layout */
+    div[data-testid="stMarkdownContainer"] {
+        contain: layout style !important;
+        min-height: 0 !important;
+    }
+
+    /* Prevent vertical block shifts */
+    div[data-testid="stVerticalBlock"] > div {
+        contain: layout style !important;
+    }
+
+    /* Prevent opacity flicker */
+    div[data-testid="stElementContainer"],
+    div[data-testid="stMarkdown"],
+    div[data-testid="stMarkdownContainer"] {
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    /* Prevent top-level rerun jump */
+    .main .block-container {
+        overflow-anchor: none !important;
+    }
+
+    /* ============ END STYLE-PRESERVE ============ */
+
+    
+
+    /* ============ ANTI-JUMP (final fix) ============ */
+    /* Prevent layout shifts on Streamlit rerun */
+    .main .block-container {
+        min-height: 90vh !important;
+        height: 100% !important;
+        overflow-anchor: none !important;
+    }
+
+    /* Prevent visibility flashes */
+    div[data-testid="stVerticalBlock"],
+    div[data-testid="stHorizontalBlock"],
+    div[data-testid="stElementContainer"] {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transition: none !important;
+        animation: none !important;
+        will-change: auto !important;
+    }
+
+    /* Streamlit's internal rerun indicator */
+    div[data-testid="stStatusWidget"],
+    div[data-testid="stSpinner"] {
+        display: none !important;
+    }
+
+    /* Kill the top-right "Running" indicator */
+    [data-testid="stStatusWidget"] {
+        display: none !important;
+    }
+
+    /* ============ END ANTI-JUMP ============ */
+
+    
+
+    /* ============ NUCLEAR-ANTI-DANCE ============ */
+    /* Kills ALL animations/transitions to prevent "dancing" on rerun */
+    html, body {
+        overflow-anchor: none !important;
+        scroll-behavior: auto !important;
+    }
+
+    *, *::before, *::after {
+        animation: none !important;
+        animation-duration: 0s !important;
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition: none !important;
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+        transition-property: none !important;
+    }
+
+    /* Specific targets */
+    .stApp,
+    .main,
+    .block-container,
+    .page-header-v2,
+    .kpi-card-v2,
+    .kpi-card,
+    .glass-card,
+    .hero,
+    .patient-card,
+    .info-card,
+    .feature-card,
+    .stat-box,
+    div[data-testid="stVerticalBlock"],
+    div[data-testid="stHorizontalBlock"],
+    section[data-testid="stSidebar"] {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    /* Streamlit internal animations */
+    div[data-testid="stAppViewContainer"],
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    /* Plotly transitions */
+    .plotly .main-svg {
+        transition: none !important;
+    }
+
+    /* ============ END NUCLEAR ============ */
+
+    
     /* ============ FULL ANTI-DANCE v2 ============ */
     html, body, .stApp, .main {
         overflow-anchor: none !important;
@@ -721,12 +889,12 @@ section[data-testid="stSidebar"] h3 {
 
     /* ============ ADVANCED ANIMATIONS ============ */
     @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: none; }
+        to { opacity: 1; transform: none; }
     }
     @keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-30px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: none; }
+        to { opacity: 1; transform: none; }
     }
     @keyframes fadeInLeft {
         from { opacity: 0; transform: translateX(-40px); }
@@ -741,16 +909,16 @@ section[data-testid="stSidebar"] h3 {
         to { opacity: 1; }
     }
     @keyframes scaleIn {
-        from { opacity: 0; transform: scale(0.85); }
-        to { opacity: 1; transform: scale(1); }
+        from { opacity: 0; transform: none; }
+        to { opacity: 1; transform: none; }
     }
     @keyframes pulse {
-        0%, 100% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.05); opacity: 0.9; }
+        0%, 100% { transform: none; opacity: 1; }
+        50% { transform: none; opacity: 0.9; }
     }
     @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
+        0%, 100% { transform: none; }
+        50% { transform: none; }
     }
     @keyframes shimmer {
         0% { background-position: -1000px 0; }
@@ -762,22 +930,22 @@ section[data-testid="stSidebar"] h3 {
         100% { background-position: 0% 50%; }
     }
     @keyframes bounce {
-        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-        40% { transform: translateY(-10px); }
-        60% { transform: translateY(-5px); }
+        0%, 20%, 50%, 80%, 100% { transform: none; }
+        40% { transform: none; }
+        60% { transform: none; }
     }
     @keyframes rotate {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
     }
     @keyframes slideInUp {
-        from { opacity: 0; transform: translateY(60px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: none; }
+        to { opacity: 1; transform: none; }
     }
     @keyframes heartbeat {
-        0%, 100% { transform: scale(1); }
-        10%, 30% { transform: scale(1.1); }
-        20%, 40% { transform: scale(1); }
+        0%, 100% { transform: none; }
+        10%, 30% { transform: none; }
+        20%, 40% { transform: none; }
     }
 
     /* Hero enhancements */
@@ -842,10 +1010,10 @@ section[data-testid="stSidebar"] h3 {
         background: linear-gradient(90deg, #16A34A 0%, #22C55E 100%);
         transform: scaleX(0);
         transform-origin: right;
-        transition: transform 0.3s ease;
+        transition: none !important;
     }
     .feature-card:hover {
-        transform: translateY(-6px);
+        transform: none;
         box-shadow: 0 16px 40px rgba(22, 163, 74, 0.15);
         border-color: #86EFAC;
     }
@@ -867,7 +1035,7 @@ section[data-testid="stSidebar"] h3 {
         border-radius: 14px;
         background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
         margin-bottom: 1rem;
-        transition: transform 0.3s ease;
+        transition: none !important;
     }
     .feature-card:hover .feature-icon {
         transform: scale(1.1) rotate(-3deg);
@@ -897,7 +1065,7 @@ section[data-testid="stSidebar"] h3 {
         animation-fill-mode: both;
     }
     .stat-box:hover {
-        transform: scale(1.05);
+        transform: none;
         border-color: #16A34A;
         box-shadow: 0 8px 24px rgba(22, 163, 74, 0.15);
     }
@@ -1166,7 +1334,7 @@ section[data-testid="stSidebar"] h3 {
     .glass-card:hover {
         box-shadow: 0 8px 32px rgba(22,163,74,0.08);
         border-color: rgba(134,239,172,0.6);
-        transform: translateY(-2px);
+        transform: none;
     }
 
     /* === KPI CARD 2.0 === */
@@ -1192,10 +1360,10 @@ section[data-testid="stSidebar"] h3 {
         background: linear-gradient(90deg, #16A34A, #22C55E);
         transform: scaleX(0);
         transform-origin: right;
-        transition: transform 0.3s ease;
+        transition: none !important;
     }
     .kpi-card-v2:hover {
-        transform: translateY(-4px);
+        transform: none;
         box-shadow: 0 12px 32px rgba(22,163,74,0.12);
         border-color: #86EFAC;
     }
@@ -1212,7 +1380,7 @@ section[data-testid="stSidebar"] h3 {
         font-size: 1.6rem;
         flex-shrink: 0;
         background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
-        transition: transform 0.3s ease;
+        transition: none !important;
     }
     .kpi-card-v2:hover .kpi-icon-v2 {
         transform: scale(1.08) rotate(-3deg);
@@ -1408,12 +1576,12 @@ section[data-testid="stSidebar"] h3 {
 
     /* === ANIMATIONS === */
     @keyframes fadeDown {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: none; }
+        to { opacity: 1; transform: none; }
     }
     @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: none; }
+        to { opacity: 1; transform: none; }
     }
     @keyframes shimmer {
         0% { background-position: -1000px 0; }
@@ -1443,7 +1611,7 @@ section[data-testid="stSidebar"] h3 {
     .stButton > button[kind="primary"]:hover,
     .stDownloadButton > button[kind="primary"]:hover,
     .stFormSubmitButton > button[kind="primary"]:hover {
-        transform: translateY(-2px);
+        transform: none;
         box-shadow: 0 8px 24px rgba(22,163,74,0.4) !important;
     }
 
@@ -1692,17 +1860,15 @@ def render_sidebar(clinic, user, active="dashboard"):
             is_active = (key == active)
 
             if is_active:
-                # ACTIVE — primary button (blue bg, white text)
                 if st.button("▶  " + label, key="navbtn_" + key,
                              use_container_width=True, type="primary"):
                     st.session_state["nav_section"] = key
-                    st.rerun()
+                    # No st.rerun() — Streamlit reruns naturally after script ends
             else:
-                # INACTIVE — secondary
                 if st.button(label, key="navbtn_" + key,
                              use_container_width=True):
                     st.session_state["nav_section"] = key
-                    st.rerun()
+                    # No st.rerun()
 
         # ========== QUICK ACTIONS ==========
         st.markdown("### ⚡ إجراءات سريعة")

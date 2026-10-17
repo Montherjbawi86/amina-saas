@@ -9,6 +9,7 @@ import zipfile
 import streamlit as st
 
 from core.db import db
+from core.save_helper import save_button, mark_result
 from core.ui import page_header, spacer
 from services.ultrasound import (
     upload_image, list_images, list_patient_images,
@@ -190,7 +191,9 @@ def _render_gallery_tab(clinic, user):
         st.info("📭 لا يوجد حوامل")
         return
 
-    pmap = {"": "الكل"} | {p["id"]: p.get("full_name", "") for p in patients}
+    pmap = {"": "الكل"}
+    for p in patients:
+        pmap[p["id"]] = p.get("full_name", "")
 
     # Filters
     c1, c2, c3 = st.columns([2, 1, 1])
@@ -300,7 +303,6 @@ def _render_image_card(img, patient_name):
                      use_container_width=True):
             if delete_image(clinic_ctx_id(), img["id"]):
                 st.success("🗑️ تم الحذف")
-                st.rerun()
 
 
 def clinic_ctx_id():
@@ -450,7 +452,6 @@ def _render_edit_modal(clinic, user):
                                  gestational_weeks=new_weeks)
                     st.session_state.pop("us_edit_id", None)
                     st.success("✅ تم الحفظ")
-                    st.rerun()
                 except Exception as e:
                     st.error("❌ {}".format(str(e)[:150]))
         with c2:
@@ -463,6 +464,7 @@ def _render_edit_modal(clinic, user):
 # MAIN
 # ============================================
 
+@st.fragment
 def render(clinic, user):
     page_header(
         "معرض صور السونار",

@@ -202,14 +202,12 @@ def _render_appointment_card(a, patients, clinic, user):
                 update_appointment(clinic["id"], a["id"], status="confirmed")
                 clear_all()
                 st.success("تم التأكيد")
-                st.rerun()
     with c2:
         if status in ("scheduled", "confirmed"):
             if st.button("✔️ إتمام", key="comp_" + a["id"], use_container_width=True):
                 update_appointment(clinic["id"], a["id"], status="completed")
                 clear_all()
                 st.success("تم الإتمام")
-                st.rerun()
     with c3:
         if status in ("scheduled", "confirmed"):
             if st.button("❌ إلغاء", key="canc_" + a["id"], use_container_width=True):

@@ -136,7 +136,6 @@ def _render_list(clinic, user):
                         mark_given(clinic["id"], v["id"])
                         clear_all()
                         st.success("تم")
-                        st.rerun()
             with c2:
                 if v.get("status") == "pending":
                     if st.button("❌ فائت", key="miss_" + v["id"], use_container_width=True):

@@ -53,6 +53,7 @@ def _clear_newborn_cache():
 import pandas as pd
 
 from core.db import db
+from core.save_helper import save_button, mark_result
 from core.ui import page_header_v2, kpi_card_v2, empty_state, section_header_v2
 from services.newborns import (
     create_newborn, list_newborns, get_newborn, update_newborn,
@@ -223,7 +224,6 @@ def _render_list_tab(clinic, user):
                     delete_newborn(clinic["id"], nb["id"])
                     st.session_state.pop("nb_del_confirm", None)
                     st.success("🗑️ تم الحذف")
-                    st.rerun()
                 else:
                     st.session_state["nb_del_confirm"] = nb["id"]
                     st.warning("اضغط مرة أخرى للتأكيد")
@@ -235,6 +235,7 @@ def _render_list_tab(clinic, user):
 # TAB 2: ADD
 # ============================================
 
+@st.fragment
 def _render_add_tab(clinic, user):
     """Add new newborn — WITHOUT st.form to avoid rerun issues"""
 
@@ -656,7 +657,6 @@ def _render_edit_page(clinic, user, edit_id=None):
                     )
                     st.session_state.pop("nb_edit_id", None)
                     st.success("✅ تم الحفظ")
-                    st.rerun()
                 except Exception as e:
                     st.error("❌ {}".format(str(e)[:150]))
 

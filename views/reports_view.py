@@ -543,7 +543,6 @@ def render(clinic, user):
                         date.today().strftime("%Y%m%d")
                     )
                     st.success("✅ PDF جاهز!")
-                    st.rerun()
                 except Exception as e:
                     st.error("❌ {}".format(str(e)[:200]))
 

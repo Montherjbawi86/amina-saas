@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 
 from core.ui import page_header_v2, kpi_card_v2, empty_state, section_header_v2
 from core.db import db
+from core.save_helper import save_button, mark_result
 from services.partogram import (
     get_active_labor, list_active_labors, start_labor, end_labor,
     add_entry, list_entries, get_latest_entry, analyze_labor,
@@ -140,7 +141,6 @@ def _render_active_labors_tab(clinic, user):
                          use_container_width=True):
                 end_labor(clinic["id"], labor["id"], status="completed")
                 st.success("✅ تم إنهاء المخاض")
-                st.rerun()
 
         st.write("")
 
@@ -190,7 +190,6 @@ def _render_partogram_tab(clinic, user):
             st.session_state["_labor_view_id"] = labor["id"]
             st.session_state["_labor_view_patient"] = selected_id
             st.success("✅ تم بدء المخاض")
-            st.rerun()
         except Exception as e:
             st.error("❌ {}".format(str(e)[:200]))
 
@@ -320,7 +319,6 @@ def _render_partogram_detail(clinic, user, labor_id):
                     "notes": notes or None,
                 })
                 st.success("✅ تم حفظ القياس")
-                st.rerun()
             except Exception as e:
                 st.error("❌ {}".format(str(e)[:200]))
 
@@ -523,6 +521,7 @@ def _render_bishop_tab(clinic, user):
 # MAIN RENDER
 # ============================================
 
+@st.fragment
 def render(clinic, user):
     """Main render"""
     page_header_v2(

@@ -437,7 +437,6 @@ def _render_by_patient_tab(clinic, patients, vaccinations):
                              use_container_width=True):
                     mark_given(clinic["id"], v["id"])
                     st.success("✅ تم")
-                    st.rerun()
         with c2:
             if status == "pending":
                 if st.button("❌ فائت", key="pv_miss_{}".format(v["id"]),

@@ -276,7 +276,6 @@ def _render_detail(clinic, user):
                         p.get("id", "")[:8]
                     )
                     st.success("✅ التقرير جاهز!")
-                    st.rerun()
                 except Exception as e:
                     st.error("❌ {}".format(str(e)[:200]))
 
