@@ -310,6 +310,16 @@ elif _nav == "medical_suite":
     import views.medical_suite_view as view_medical
     view_medical.render(clinic, user)
 
+# ============ PREECLAMPSIA ============
+elif _nav == "preeclampsia":
+    import views.preeclampsia_view as view_pe
+    view_pe.render(clinic, user)
+
+# ============ GDM ============
+elif _nav == "gdm":
+    import views.gdm_view as view_gdm
+    view_gdm.render(clinic, user)
+
 # ============ REPORTS ============
 elif _nav == "reports":
     import views.reports_view as view_reports
