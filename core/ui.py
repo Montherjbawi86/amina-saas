@@ -1850,6 +1850,7 @@ def render_sidebar(clinic, user, active="dashboard"):
             ("preeclampsia", "🚨 تسمم الحمل"),
             ("gdm", "🩸 سكري الحمل"),
             ("labor", "🤰 المخاض"),
+            ("postpartum", "🤱 ما بعد الولادة"),
             ("reports", "📊 التقارير"),
             ("two_factor", "🛡️ الحماية الثنائية"),
             ("audit_log", "📝 سجل التغييرات"),

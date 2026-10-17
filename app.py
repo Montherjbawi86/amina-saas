@@ -322,6 +322,11 @@ elif _nav == "labor":
     import views.labor_view as view_labor
     view_labor.render(clinic, user)
 
+# ============ POSTPARTUM ============
+elif _nav == "postpartum":
+    import views.postpartum_view as view_pp
+    view_pp.render(clinic, user)
+
 # ============ REPORTS ============
 elif _nav == "reports":
     import views.reports_view as view_reports
