@@ -320,6 +320,11 @@ elif _nav == "gdm":
     import views.gdm_view as view_gdm
     view_gdm.render(clinic, user)
 
+# ============ LABOR ============
+elif _nav == "labor":
+    import views.labor_view as view_labor
+    view_labor.render(clinic, user)
+
 # ============ REPORTS ============
 elif _nav == "reports":
     import views.reports_view as view_reports
